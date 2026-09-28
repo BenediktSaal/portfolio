@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Operations Performance Cockpit — Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EBEEF2;
+    --card:#FFFFFF;
+    --ink:#111823;
+    --ink-2:#4A5563;
+    --ink-3:#8A94A2;
+    --line:#D7DDE5;
+    --line-2:#E7ECF1;
+    --brand:#0B6E75;
+    --brand-tint:#E1F0F1;
+    --ok:#1B8A5A;
+    --warn:#C88A0A;
+    --bad:#C4433B;
+    --ok-tint:#E4F2EB;
+    --warn-tint:#F8EFD9;
+    --bad-tint:#F8E5E3;
+    --shadow:0 1px 2px rgba(17,24,35,.04),0 6px 20px rgba(17,24,35,.05);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"IBM Plex Sans",system-ui,sans-serif;
+    line-height:1.45;
+    padding:clamp(14px,3vw,34px);
+    font-size:15px;
+  }
+  .mono{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
+  .wrap{max-width:1180px;margin:0 auto}
+
+  /* ---- Header ---- */
+  header{
+    display:flex;flex-wrap:wrap;gap:16px 24px;align-items:flex-end;
+    justify-content:space-between;
+    padding-bottom:18px;margin-bottom:22px;
+    border-bottom:2px solid var(--ink);
+  }
+  .eyebrow{
+    font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--brand);font-weight:600;margin-bottom:8px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .pulse{width:7px;height:7px;border-radius:50%;background:var(--brand);
+    box-shadow:0 0 0 0 rgba(11,110,117,.5);animation:pulse 2.4s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(11,110,117,.45)}70%{box-shadow:0 0 0 7px rgba(11,110,117,0)}100%{box-shadow:0 0 0 0 rgba(11,110,117,0)}}
+  h1{font-size:clamp(22px,3.4vw,30px);font-weight:700;letter-spacing:-.01em;line-height:1.1}
+  h1 span{color:var(--ink-3);font-weight:500}
+  .readout{
+    font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink-2);
+    text-align:right;line-height:1.7;
+  }
+  .readout b{color:var(--ink);font-weight:600}
+  .demo-tag{
+    display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:10.5px;
+    letter-spacing:.08em;text-transform:uppercase;color:var(--warn);
+    background:var(--warn-tint);border:1px solid #EAD9AE;border-radius:3px;
+    padding:2px 7px;margin-top:6px;
+  }
+
+  /* ---- Stat bar ---- */
+  .statbar{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+    border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:22px}
+  @media(max-width:700px){.statbar{grid-template-columns:repeat(2,1fr)}}
+  .statbar > div{background:var(--card);padding:13px 16px}
+  .sb-k{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.11em;text-transform:uppercase;
+    color:var(--ink-3)}
+  .sb-v{font-family:"IBM Plex Mono",monospace;font-size:21px;font-weight:600;letter-spacing:-.02em;
+    margin-top:5px;line-height:1}
+  .sb-n{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-3);margin-top:5px}
+
+  /* ---- KPI grid ---- */
+  .kpi-grid{
+    display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:22px;
+  }
+  @media(max-width:920px){.kpi-grid{grid-template-columns:repeat(3,1fr)}}
+  @media(max-width:560px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+  .kpi{
+    background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:13px 13px 11px;position:relative;overflow:hidden;cursor:pointer;
+    box-shadow:var(--shadow);transition:transform .12s ease,border-color .12s ease;
+  }
+  .kpi:hover{transform:translateY(-2px);border-color:var(--ink-3)}
+  .kpi.active{border-color:var(--brand);box-shadow:0 0 0 2px var(--brand-tint),var(--shadow)}
+  .kpi .rail{position:absolute;left:0;top:0;bottom:0;width:4px}
+  .kpi.s-ok .rail{background:var(--ok)} .kpi.s-warn .rail{background:var(--warn)} .kpi.s-bad .rail{background:var(--bad)}
+  .kpi .label{font-size:11px;color:var(--ink-2);font-weight:500;letter-spacing:.01em;
+    display:flex;align-items:center;gap:6px;min-height:30px}
+  .dot{width:7px;height:7px;border-radius:50%;flex:none}
+  .s-ok .dot{background:var(--ok)} .s-warn .dot{background:var(--warn)} .s-bad .dot{background:var(--bad)}
+  .kpi .val{font-family:"IBM Plex Mono",monospace;font-size:23px;font-weight:600;
+    letter-spacing:-.02em;margin-top:9px;line-height:1}
+  .kpi .val .unit{font-size:12px;color:var(--ink-3);font-weight:400;margin-left:2px}
+  .kpi .delta{font-family:"IBM Plex Mono",monospace;font-size:11.5px;margin-top:5px;
+    display:flex;align-items:center;gap:5px}
+  .delta.up{color:var(--ok)} .delta.down{color:var(--bad)} .delta.flat{color:var(--ink-3)}
+  .kpi .spark{margin-top:9px;height:26px;width:100%}
+  .kpi .tgt{font-size:10px;color:var(--ink-3);font-family:"IBM Plex Mono",monospace;margin-top:7px}
+
+  /* ---- Main panels ---- */
+  .cols{display:grid;grid-template-columns:1.55fr 1fr;gap:16px;margin-bottom:16px}
+  @media(max-width:880px){.cols{grid-template-columns:1fr}}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    box-shadow:var(--shadow);padding:18px}
+  .panel-h{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+  .panel-h h2{font-size:14px;font-weight:600;letter-spacing:.01em}
+  .panel-h .sub{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-3)}
+
+  .chart-toggle{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+  .chip{font-family:"IBM Plex Mono",monospace;font-size:11px;padding:5px 10px;border-radius:20px;
+    border:1px solid var(--line);background:#fff;color:var(--ink-2);cursor:pointer;
+    transition:all .12s ease}
+  .chip:hover{border-color:var(--ink-3)}
+  .chip.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+  #mainChart{width:100%;height:auto;display:block}
+
+  /* ---- Anomaly radar ---- */
+  .radar-list{display:flex;flex-direction:column;gap:10px}
+  .flag{display:flex;gap:11px;padding:11px;border:1px solid var(--line-2);border-radius:8px;
+    background:#FBFCFD}
+  .flag .sev{width:4px;border-radius:3px;flex:none}
+  .flag.crit .sev{background:var(--bad)} .flag.warnf .sev{background:var(--warn)}
+  .flag .body{flex:1;min-width:0}
+  .flag .top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+  .flag .kpi-name{font-size:12.5px;font-weight:600}
+  .flag .when{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--ink-3);flex:none}
+  .flag .desc{font-size:12px;color:var(--ink-2);margin-top:3px}
+  .flag .metric{font-family:"IBM Plex Mono",monospace;font-size:11px;margin-top:5px}
+  .flag .metric b{color:var(--bad)} .flag.warnf .metric b{color:var(--warn)}
+  .radar-empty{font-size:13px;color:var(--ink-3);padding:20px;text-align:center}
+
+  /* ---- Measures ---- */
+  .ms-grid{display:grid;grid-template-columns:auto 46px 116px 1fr 74px 122px;gap:4px 12px;align-items:center}
+  .ms-head{display:grid;grid-template-columns:auto 46px 116px 1fr 74px 122px;gap:12px;align-items:center;
+    padding:0 14px 8px;font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.09em;
+    text-transform:uppercase;color:var(--ink-3)}
+  .ms-head span:first-child{width:22px}
+  .ms-list{display:flex;flex-direction:column;gap:8px}
+  .ms{display:grid;grid-template-columns:auto 46px 116px 1fr 74px 122px;gap:4px 12px;align-items:center;
+    grid-template-areas:"ball id kpi title owner state" ". eff eff eff eff eff";
+    padding:11px 14px;border:1px solid var(--line-2);border-radius:8px;background:#FBFCFD;
+    cursor:pointer;transition:border-color .12s ease}
+  .ms:hover{border-color:var(--ink-3)}
+  @media(max-width:860px){
+    .ms-head{display:none}
+    .ms{grid-template-columns:auto 1fr auto;grid-template-areas:"ball title title" ". kpi owner" ". state state" ". eff eff"}
+  }
+  .ms .ball{grid-area:ball;display:flex}
+  .ms .msid{grid-area:id;font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:600;color:var(--brand)}
+  .ms .mskpi{grid-area:kpi;font-size:11.5px;color:var(--ink-3)}
+  .ms .mstitle{grid-area:title;font-size:13.5px;font-weight:600;line-height:1.35}
+  .ms .msowner{grid-area:owner;justify-self:start;display:flex;flex-direction:column;gap:2px;
+    font-family:"IBM Plex Mono",monospace;font-size:12.5px;font-weight:600;color:var(--brand);
+    background:var(--brand-tint);border:1px solid #BFDBDD;border-radius:6px;padding:3px 9px;
+    white-space:nowrap;text-align:center}
+  .ms .msowner i{font-style:normal;font-size:8.5px;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--ink-3);font-weight:500}
+  .ms .st{grid-area:state;justify-self:end;font-family:"IBM Plex Mono",monospace;font-size:10.5px;
+    padding:2px 7px;border-radius:3px;border:1px solid var(--line);color:var(--ink-2);white-space:nowrap}
+  .ms .st.done{color:var(--ok);border-color:var(--ok);background:var(--ok-tint)}
+  .ms .st.late{color:var(--bad);border-color:var(--bad);background:var(--bad-tint)}
+  .ms .mseff{grid-area:eff;font-size:12px;color:var(--ink-2)}
+  .ms-hint{font-size:11px;color:var(--ink-3);margin-top:11px;font-family:"IBM Plex Mono",monospace}
+  .flag .linked{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--brand);margin-top:5px}
+
+  /* ---- Summary ---- */
+  .summary{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    box-shadow:var(--shadow);padding:20px 22px}
+  .summary-h{display:flex;align-items:center;gap:9px;margin-bottom:14px}
+  .summary-h h2{font-size:14px;font-weight:600}
+  .gen-badge{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--brand);background:var(--brand-tint);
+    border-radius:3px;padding:2px 7px}
+  .summary p{font-size:14px;color:var(--ink);margin-bottom:11px;max-width:74ch}
+  .summary p b{font-weight:600}
+  .summary .val-ok{color:var(--ok);font-weight:600} .summary .val-bad{color:var(--bad);font-weight:600}
+  .summary .val-warn{color:var(--warn);font-weight:600}
+  .actions{margin-top:14px;border-top:1px solid var(--line-2);padding-top:14px}
+  .actions h3{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);
+    font-family:"IBM Plex Mono",monospace;margin-bottom:10px}
+  .action{display:flex;gap:10px;font-size:13.5px;color:var(--ink-2);margin-bottom:8px;align-items:flex-start}
+  .action .n{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--brand);
+    font-weight:600;flex:none;margin-top:1px}
+
+  footer{margin-top:22px;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-3);
+    text-align:center;line-height:1.7}
+
+  .tooltip{position:fixed;pointer-events:none;background:var(--ink);color:#fff;
+    font-family:"IBM Plex Mono",monospace;font-size:11px;padding:6px 9px;border-radius:6px;
+    opacity:0;transition:opacity .1s;z-index:50;white-space:nowrap;transform:translate(-50%,-130%)}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow"><span class="pulse"></span>Operations Performance Cockpit</div>
+      <h1>Catering operations <span>/ weekly performance dialogue</span></h1>
+      <span class="demo-tag" id="demoTag">Demo · synthetic data</span>
+    </div>
+  </header>
+
+  <div class="statbar" id="readout"></div>
+
+  <div class="kpi-grid" id="kpiGrid"></div>
+
+  <div class="cols">
+    <div class="panel">
+      <div class="panel-h">
+        <h2 id="chartTitle">Trend</h2>
+        <span class="sub" id="chartSub"></span>
+      </div>
+      <div class="chart-toggle" id="chartToggle"></div>
+      <svg id="mainChart" viewBox="0 0 660 320" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+
+    <div class="panel">
+      <div class="panel-h">
+        <h2>Anomaly radar</h2>
+        <span class="sub" id="flagCount"></span>
+      </div>
+      <div class="radar-list" id="radar"></div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-bottom:16px">
+    <div class="panel-h">
+      <h2>Measures &amp; follow-up</h2>
+      <span class="sub" id="measureCount"></span>
+    </div>
+    <div class="ms-head"><span></span><span>ID</span><span>KPI</span><span>Measure</span>
+      <span>Responsible</span><span>Status</span></div>
+    <div id="measures" class="ms-list"></div>
+    <div class="ms-hint">Agreed in the weekly dialogue, reviewed every week until closed. Select a row to see the KPI it belongs to.</div>
+  </div>
+
+  <div class="summary">
+    <div class="summary-h">
+      <h2>Weekly review summary</h2>
+      <span class="gen-badge">rule-based</span>
+    </div>
+    <div id="summaryBody"></div>
+  </div>
+
+  <footer>
+    All figures are synthetic · no real operational data · all analysis runs in the browser<br>
+    The management summary is written by deterministic rules (z-scores, linear trend), not by a language model<br>
+    Portfolio demo — KPI evaluation, anomaly detection &amp; reporting automation
+  </footer>
+</div>
+<div class="tooltip" id="tt"></div>
+
+<script>
+/* =========================================================
+   SYNTHETIC DATA  (airline catering operation, Q3 2026)
+   ========================================================= */
+const weeks = ["W27","W28","W29","W30","W31","W32","W33","W34","W35","W36","W37","W38","W39"];
+
+// direction: "up" = higher is better, "down" = lower is better
+const KPIS = [
+  { id:"otd",  name:"On-Time Delivery", short:"OTD", unit:"%", axis:"%", target:98.5, dir:"up",
+    data:[99.1,98.9,99.2,98.7,99.0,98.8,98.6,98.4,98.2,97.4,96.9,97.8,98.3], dec:1 },
+  { id:"def",  name:"Defects / 1,000 meals", short:"Defects", unit:"", axis:"defects per 1,000 meals", target:2.0, dir:"down",
+    data:[1.4,1.6,1.3,1.7,1.5,1.8,1.6,1.9,2.2,3.6,2.8,2.1,1.8], dec:1 },
+  { id:"cyc",  name:"Cycle time", short:"Cycle", unit:" min", axis:"minutes", target:42.0, dir:"down",
+    data:[39.5,40.1,39.8,40.5,40.2,41.0,41.5,42.0,42.6,43.4,43.8,43.0,42.5], dec:1 },
+  { id:"cost", name:"Cost / meal", short:"Cost", unit:" €", axis:"€ per meal", target:8.50, dir:"down",
+    data:[8.20,8.25,8.18,8.30,8.28,8.35,8.42,8.48,8.55,8.62,8.71,8.79,8.78], dec:2 },
+  { id:"prod", name:"Productivity", short:"Prod.", unit:"/FTE-h", axis:"meals per FTE-hour", target:26.0, dir:"up",
+    data:[27.2,27.0,27.4,26.8,27.1,26.6,26.4,26.1,25.7,25.2,24.9,25.6,26.0], dec:1 },
+  { id:"vol",  name:"Volume", short:"Volume", unit:"k", axis:"thousand meals", target:180, dir:"up",
+    data:[178,180,182,179,183,181,186,190,193,197,201,199,196], dec:0 },
+];
+
+/* Measures agreed in the weekly dialogue (synthetic), each triggered by one of the deviations above.
+   started = the week it went live, so its effect is visible in the chart. */
+const WINDOW = 4;
+const MEASURES = [
+  { id:"M-01", kpi:"def",  owner:"A.K.", due:"W38", progress:1, started:9,
+    title:"Check every delivery from the new meat supplier before it goes into production",
+    why:"Errors jumped in W36 after a supplier change",
+    effect:"Errors down from 3.6 to 1.8 per 1,000 meals — back under target" },
+  { id:"M-02", kpi:"cyc",  owner:"T.B.", due:"W41", progress:0.5, started:10,
+    title:"Two extra people on the packing line during the midday rush",
+    why:"Volume is running 9% above plan and the line cannot keep up at peak",
+    effect:"Time per order down from 43.8 to 42.5 minutes — still above target" },
+  { id:"M-03", kpi:"cost", owner:"M.S.", due:"W42", progress:0.25, started:11,
+    title:"Weigh portions on the tray line and record what gets thrown away",
+    why:"Cost per meal has risen every week since W33",
+    effect:"Started in W38 — too early to show an effect" },
+  { id:"M-04", kpi:"otd",  owner:"J.R.", due:"W37", progress:0.75, overdue:true, started:10,
+    title:"Fixed handover time for trolleys at shift change",
+    why:"Late handovers were pushing deliveries past their slot",
+    effect:"On-time deliveries up from 96.9% to 98.3%, productivity back at target" },
+];
+
+
+
+
+/* ---------- helpers ---------- */
+const fmt=(v,d)=>v.toLocaleString("en-GB",{minimumFractionDigits:d,maximumFractionDigits:d});
+const mean=a=>a.reduce((s,x)=>s+x,0)/a.length;
+const std=a=>{const m=mean(a);return Math.sqrt(mean(a.map(x=>(x-m)**2)))};
+function status(k){ // status of the latest value against target
+  if(k.target===null) return "ok";
+  const v=k.data[k.data.length-1];
+  const ok = k.dir==="up" ? v>=k.target : v<=k.target;
+  if(ok) return "ok";
+  const gap = Math.abs(v-k.target)/k.target;
+  return gap>0.03 ? "bad" : "warn";
+}
+function trendSlope(a){ // simple linear slope over the index
+  const n=a.length, xs=[...Array(n).keys()];
+  const mx=mean(xs), my=mean(a);
+  let num=0,den=0; xs.forEach((x,i)=>{num+=(x-mx)*(a[i]-my);den+=(x-mx)**2});
+  return num/den;
+}
+
+/* =========================================================
+   ANOMALY DETECTION  (statistical, computed from the data)
+   ========================================================= */
+function detectAnomalies(){
+  const n=weeks.length, start=n-WINDOW, flags=[];
+  KPIS.forEach(k=>{
+    if(k.target===null) return;
+    const miss=v=> k.dir==="up" ? v<k.target : v>k.target;
+    const breaches=[]; let peak=null;
+    for(let i=start;i<n;i++){
+      const v=k.data[i];
+      if(miss(v)) breaches.push({i,v});
+      if(isSpike(k,i)) peak={i,v};
+    }
+    if(!breaches.length) return;
+    const last=breaches[breaches.length-1];
+    const line=`target missed in ${breaches.length} of the last ${WINDOW} weeks`;
+    const limit=`(target ${k.dir==="up"?"≥":"≤"} ${fmt(k.target,k.dec)}${k.unit})`;
+    let spike=null;
+    if(peak){
+      const before=k.data.slice(Math.max(0,peak.i-4),peak.i), base=mean(before);
+      spike={i:peak.i, v:peak.v, rel:Math.abs(peak.v-base)/base};
+    }
+    if(spike){
+      flags.push({kpi:k, week:weeks[spike.i], i:spike.i, v:spike.v, sev:"crit", count:breaches.length,
+        reason:`Worst week of the quarter — roughly ${Math.round(spike.rel*100)}% ${k.dir==="up"?"below":"above"} the four weeks before it · ${line}`});
+    }else{
+      flags.push({kpi:k, week:weeks[last.i], i:last.i, v:last.v, sev:"warnf", count:breaches.length,
+        reason:`Target missed in ${breaches.length} of the last ${WINDOW} weeks ${limit}`});
+    }
+  });
+  flags.sort((a,b)=> (a.sev===b.sev ? b.count-a.count : (a.sev==="crit"?-1:1)));
+  return flags;
+}
+
+
+/* A week counts as a spike when it is the quarter's worst week for that KPI, misses the target,
+   and sits at least 25% away from the four weeks before it. No statistics jargon needed. */
+function isSpike(k,i){
+  if(k.target===null) return false;
+  const v=k.data[i];
+  const miss = k.dir==="up" ? v<k.target : v>k.target;
+  if(!miss) return false;
+  const worst = k.dir==="up" ? v===Math.min(...k.data) : v===Math.max(...k.data);
+  if(!worst) return false;
+  const before=k.data.slice(Math.max(0,i-4),i);
+  if(!before.length) return false;
+  return Math.abs(v-mean(before))/mean(before) >= 0.25;
+}
+
+function measuresFor(kpiId){ return MEASURES.filter(m=>m.kpi===kpiId); }
+
+/* =========================================================
+   RENDER: Readout
+   ========================================================= */
+(function(){
+  const reds=KPIS.filter(k=>status(k)==="bad").length;
+  const warns=KPIS.filter(k=>status(k)==="warn").length;
+  const health=Math.round(100*(KPIS.filter(k=>status(k)==="ok").length)/KPIS.length);
+  const openM=MEASURES.filter(m=>m.progress<1).length;
+  const lateM=MEASURES.filter(m=>m.overdue&&m.progress<1).length;
+  const cell=(k,v,note)=>`<div><div class="sb-k">${k}</div><div class="sb-v">${v}</div>`+
+    (note?`<div class="sb-n">${note}</div>`:"")+`</div>`;
+  document.getElementById("readout").innerHTML=
+    cell("Reporting week", weeks[weeks.length-1], "compared with "+weeks[weeks.length-2])+
+    cell("KPIs on target", `${KPIS.length-reds-warns} / ${KPIS.length}`,
+      `<span style="color:var(--bad)">${reds} red</span> · <span style="color:var(--warn)">${warns} amber</span>`)+
+    cell("Signals, last 4 weeks", detectAnomalies().length, "one line per KPI off target")+
+    cell("Open measures", openM, lateM?`<span style="color:var(--bad)">${lateM} overdue</span>`:"all on schedule");
+})();
+
+/* =========================================================
+   RENDER: KPI cards with sparklines
+   ========================================================= */
+function sparkline(k,w=120,h=26){
+  const d=k.data, min=Math.min(...d), max=Math.max(...d), pad=2;
+  const rng=(max-min)||1;
+  const pts=d.map((v,i)=>{
+    const x=pad+i*(w-2*pad)/(d.length-1);
+    const y=h-pad-((v-min)/rng)*(h-2*pad);
+    return [x,y];
+  });
+  const path=pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" ");
+  const st=status(k);
+  const col=st==="ok"?"var(--ok)":st==="warn"?"var(--warn)":"var(--bad)";
+  const last=pts[pts.length-1];
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    <path d="${path}" fill="none" stroke="${col}" stroke-width="1.6" stroke-linejoin="round"/>
+    <circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="2.4" fill="${col}"/>
+  </svg>`;
+}
+function renderKPIs(){
+  const grid=document.getElementById("kpiGrid");
+  grid.innerHTML=KPIS.map(k=>{
+    const d=k.data, cur=d[d.length-1], prev=d[d.length-2];
+    const diff=cur-prev;
+    const good = k.dir==="up"? diff>=0 : diff<=0;
+    const dcls = Math.abs(diff)<1e-9 ? "flat" : (good?"up":"down");
+    const arrow = Math.abs(diff)<1e-9 ? "→" : (diff>0?"▲":"▼");
+    const st=status(k);
+    const tgt = k.target===null ? "&nbsp;" : `Target ${k.dir==="up"?"≥":"≤"} ${fmt(k.target,k.dec)}${k.unit}`;
+    return `<div class="kpi s-${st}" data-id="${k.id}" tabindex="0" role="button" aria-label="${k.name}">
+      <span class="rail"></span>
+      <div class="label"><span class="dot"></span>${k.name}</div>
+      <div class="val">${fmt(cur,k.dec)}<span class="unit">${k.unit}</span></div>
+      <div class="delta ${dcls}">${arrow} ${fmt(Math.abs(diff),k.dec)} <span style="color:var(--ink-3)">vs. prev. week</span></div>
+      ${sparkline(k)}
+      <div class="tgt">${tgt}</div>
+    </div>`;
+  }).join("");
+  grid.querySelectorAll(".kpi").forEach(el=>{
+    el.addEventListener("click",()=>select(el.dataset.id));
+    el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();select(el.dataset.id)}});
+  });
+}
+
+/* =========================================================
+   RENDER: chart toggle + main chart
+   ========================================================= */
+let current="otd";
+function renderToggle(){
+  const t=document.getElementById("chartToggle");
+  t.innerHTML=KPIS.map(k=>`<button class="chip ${k.id===current?"active":""}" data-id="${k.id}">${k.short}</button>`).join("");
+  t.querySelectorAll(".chip").forEach(b=>b.addEventListener("click",()=>select(b.dataset.id)));
+}
+function select(id){
+  current=id;
+  renderToggle();
+  document.querySelectorAll(".kpi").forEach(el=>el.classList.toggle("active",el.dataset.id===id));
+  renderChart();
+}
+function renderChart(){
+  const k=KPIS.find(x=>x.id===current);
+  const W=660,H=320, mL=48,mR=18,mT=18,mB=34;
+  const iw=W-mL-mR, ih=H-mT-mB;
+  const d=k.data;
+  let min=Math.min(...d), max=Math.max(...d);
+  if(k.target!==null){min=Math.min(min,k.target);max=Math.max(max,k.target)}
+  const pad=(max-min)*0.15||1; min-=pad; max+=pad;
+  const X=i=>mL+i*iw/(d.length-1);
+  const Y=v=>mT+ih-((v-min)/(max-min))*ih;
+
+  const m=mean(d);
+  const isAnom=(v,i)=>isSpike(k,i);
+
+  // gridlines
+  let grid="";
+  for(let g=0;g<=4;g++){
+    const val=min+(max-min)*g/4, y=Y(val);
+    grid+=`<line x1="${mL}" y1="${y.toFixed(1)}" x2="${W-mR}" y2="${y.toFixed(1)}" stroke="var(--line-2)" stroke-width="1"/>`;
+    grid+=`<text x="${mL-8}" y="${(y+3.5).toFixed(1)}" text-anchor="end" font-family="IBM Plex Mono" font-size="10" fill="var(--ink-3)">${fmt(val,k.dec)}</text>`;
+  }
+  // x labels
+  let xlab="";
+  d.forEach((_,i)=>{ if(i%2===0||i===d.length-1){
+    xlab+=`<text x="${X(i).toFixed(1)}" y="${H-12}" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="var(--ink-3)">${weeks[i]}</text>`;}});
+  // target line
+  let tgt="";
+  if(k.target!==null){
+    const ty=Y(k.target);
+    tgt=`<line x1="${mL}" y1="${ty.toFixed(1)}" x2="${W-mR}" y2="${ty.toFixed(1)}" stroke="var(--brand)" stroke-width="1.4" stroke-dasharray="5 4"/>
+    <text x="${W-mR}" y="${(ty-6).toFixed(1)}" text-anchor="end" font-family="IBM Plex Mono" font-size="10" fill="var(--brand)" font-weight="600">Target ${fmt(k.target,k.dec)}${k.unit}</text>`;
+  }
+  // area + line
+  const line=d.map((v,i)=>(i?"L":"M")+X(i).toFixed(1)+" "+Y(v).toFixed(1)).join(" ");
+  const area=`${line} L ${X(d.length-1).toFixed(1)} ${(mT+ih)} L ${mL} ${(mT+ih)} Z`;
+  // points
+  let dots="";
+  d.forEach((v,i)=>{
+    const an=isAnom(v,i);
+    dots+=`<circle class="pt" cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="${an?5:3}"
+      fill="${an?"var(--bad)":"#fff"}" stroke="${an?"var(--bad)":"var(--ink)"}" stroke-width="1.6"
+      data-w="${weeks[i]}" data-v="${fmt(v,k.dec)}${k.unit}" data-a="${an?1:0}" style="cursor:pointer"/>`;
+    if(an){ dots+=`<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="9" fill="none" stroke="var(--bad)" stroke-width="1" opacity=".35"/>`;}
+  });
+
+  // axis unit + measure markers
+  let axis=`<text x="4" y="12" font-family="IBM Plex Mono" font-size="10" fill="var(--ink-3)">${k.axis}</text>`+
+    `<text x="${W-mR}" y="${H-1}" text-anchor="end" font-family="IBM Plex Mono" font-size="9.5" fill="var(--ink-3)">calendar week</text>`;
+  let marks="";
+  measuresFor(k.id).forEach(m=>{
+    const mx=X(m.started);
+    marks+=`<line x1="${mx.toFixed(1)}" y1="${mT}" x2="${mx.toFixed(1)}" y2="${mT+ih}" stroke="var(--ink-3)" stroke-width="1" stroke-dasharray="2 4"/>`+
+      `<rect x="${(mx-17).toFixed(1)}" y="${mT-2}" width="34" height="14" rx="3" fill="var(--brand-tint)" stroke="var(--brand)" stroke-width="0.8"/>`+
+      `<text x="${mx.toFixed(1)}" y="${mT+8.5}" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="var(--brand)" font-weight="600">${m.id}</text>`;
+  });
+
+  document.getElementById("chartTitle").textContent=k.name;
+  document.getElementById("chartSub").textContent =
+    `13-week average ${fmt(m,k.dec)}${k.unit}` + (k.target!==null ? ` · target ${k.dir==="up"?"≥":"≤"} ${fmt(k.target,k.dec)}${k.unit}` : "");
+  document.getElementById("mainChart").innerHTML=`
+    ${grid}${tgt}${marks}${axis}
+    <path d="${area}" fill="var(--brand)" opacity="0.06"/>
+    <path d="${line}" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    ${dots}${xlab}`;
+
+  // tooltip
+  const tt=document.getElementById("tt");
+  document.querySelectorAll("#mainChart .pt").forEach(c=>{
+    c.addEventListener("mousemove",e=>{
+      tt.innerHTML=`${c.dataset.w} · ${c.dataset.v}${c.dataset.a==="1"?" · worst week of the quarter":""}`;
+      tt.style.left=e.clientX+"px";tt.style.top=e.clientY+"px";tt.style.opacity="1";});
+    c.addEventListener("mouseleave",()=>tt.style.opacity="0");
+  });
+}
+
+/* =========================================================
+   RENDER: anomaly radar
+   ========================================================= */
+function renderRadar(){
+  const flags=detectAnomalies();
+  const box=document.getElementById("radar");
+  document.getElementById("flagCount").textContent=`last ${WINDOW} weeks · ${flags.length} signals`;
+  if(!flags.length){box.innerHTML=`<div class="radar-empty">No signals in the last ${WINDOW} weeks — all KPIs inside the expected corridor.</div>`;return;}
+  box.innerHTML=flags.map(f=>{
+    const ms=measuresFor(f.kpi.id);
+    const tag=ms.length?`<div class="linked">Measure ${ms[0].id} · ${ms[0].progress>=1?"closed":"in progress"}</div>`:"";
+    return `
+    <div class="flag ${f.sev==="crit"?"crit":"warnf"}">
+      <div class="sev"></div>
+      <div class="body">
+        <div class="top">
+          <span class="kpi-name">${f.kpi.name}</span>
+          <span class="when">${f.week}</span>
+        </div>
+        <div class="desc">${f.reason}</div>
+        <div class="metric">Actual <b>${fmt(f.v,f.kpi.dec)}${f.kpi.unit}</b> · target ${f.kpi.target!==null?fmt(f.kpi.target,f.kpi.dec)+f.kpi.unit:"–"}</div>
+        ${tag}
+      </div>
+    </div>`;}).join("");
+}
+
+/* =========================================================
+   RENDER: measures & follow-up
+   ========================================================= */
+function harvey(p){
+  const r=8, c=11, full=p>=1;
+  const seg = p<=0 ? "" : full
+    ? `<circle cx="${c}" cy="${c}" r="${r}" fill="var(--brand)"/>`
+    : `<path d="M ${c} ${c} L ${c} ${c-r} A ${r} ${r} 0 ${p>0.5?1:0} 1 ${
+        (c+r*Math.sin(2*Math.PI*p)).toFixed(2)} ${(c-r*Math.cos(2*Math.PI*p)).toFixed(2)} Z" fill="var(--brand)"/>`;
+  return `<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+    <circle cx="${c}" cy="${c}" r="${r}" fill="#fff" stroke="var(--brand)" stroke-width="1.4"/>
+    ${seg}<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="var(--brand)" stroke-width="1.4"/></svg>`;
+}
+function renderMeasures(){
+  const open=MEASURES.filter(m=>m.progress<1).length;
+  const late=MEASURES.filter(m=>m.overdue&&m.progress<1).length;
+  document.getElementById("measureCount").textContent =
+    `${MEASURES.length} tracked · ${open} open · ${late} overdue`;
+  document.getElementById("measures").innerHTML = MEASURES.map(m=>{
+    const k=KPIS.find(x=>x.id===m.kpi);
+    const state = m.progress>=1 ? `<span class="st done">Closed</span>`
+      : m.overdue ? `<span class="st late">Overdue · due ${m.due}</span>`
+      : `<span class="st">${Math.round(m.progress*100)}% · due ${m.due}</span>`;
+    return `<div class="ms" data-kpi="${m.kpi}" tabindex="0" role="button" aria-label="${m.id} ${m.title}">
+      <span class="ball">${harvey(m.progress)}</span>
+      <span class="msid">${m.id}</span>
+      <span class="mskpi">${k.name}</span>
+      <span class="mstitle">${m.title}</span>
+      <span class="msowner"><i>Responsible</i>${m.owner}</span>
+      ${state}
+      <span class="mseff">${m.effect}</span>
+    </div>`;
+  }).join("");
+  document.querySelectorAll("#measures .ms").forEach(el=>{
+    const go=()=>{select(el.dataset.kpi);document.getElementById("mainChart").scrollIntoView({block:"center",behavior:"smooth"});};
+    el.addEventListener("click",go);
+    el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go();}});
+  });
+}
+
+/* =========================================================
+   RENDER: management summary  (derived from the data)
+   ========================================================= */
+function renderSummary(){
+  const n=weeks.length, start=n-WINDOW, win=`${weeks[start]}–${weeks[n-1]}`;
+  const flags=detectAnomalies();
+  const reds=KPIS.filter(k=>status(k)==="bad");
+  const warns=KPIS.filter(k=>status(k)==="warn");
+  const oks=KPIS.filter(k=>status(k)==="ok"&&k.target!==null);
+  const tracked=KPIS.filter(k=>k.target!==null).length;
+  const listify=a=>a.length<2?a.join(""):a.slice(0,-1).join(", ")+" and "+a[a.length-1];
+  const misses=(k)=>{let c=0;for(let i=start;i<n;i++){const v=k.data[i];
+    if(k.dir==="up"? v<k.target : v>k.target) c++;} return c;};
+
+  const cost=KPIS.find(k=>k.id==="cost"), prod=KPIS.find(k=>k.id==="prod"),
+        cyc=KPIS.find(k=>k.id==="cyc"), vol=KPIS.find(k=>k.id==="vol"), otd=KPIS.find(k=>k.id==="otd");
+  const costChg=(cost.data[n-1]-cost.data[0])/cost.data[0]*100;
+  const volChg=(mean(vol.data.slice(start))-vol.target)/vol.target*100;
+  let html="";
+
+  html+=`<p><b>Where we stand (${win}).</b> `+
+    `<span class="val-ok">${oks.length} of ${tracked}</span> KPIs are on target in the latest week`+
+    (reds.length? `. Off target: <span class="val-bad">${listify(reds.map(k=>k.name))}</span>` : "")+
+    (warns.length? `. Just over the line: <span class="val-warn">${listify(warns.map(k=>k.name))}</span>` : "")+
+    `. Volume ran <b>${volChg>0?"+":""}${volChg.toFixed(0)}%</b> against plan across these four weeks, which is the `+
+    `backdrop to most of the misses.</p>`;
+
+  const worst=flags.find(f=>f.sev==="crit");
+  if(worst){
+    const m=measuresFor(worst.kpi.id)[0];
+    html+=`<p><b>Biggest single deviation.</b> ${worst.kpi.name} in ${worst.week} at `+
+      `<span class="val-bad">${fmt(worst.v,worst.kpi.dec)}${worst.kpi.unit}</span>, the worst week of the quarter. `+
+      (m? `Measure <b>${m.id}</b> (${m.owner}) was put in place for it: ${m.effect.charAt(0).toLowerCase()+m.effect.slice(1)}.`
+        : `Nothing is being tracked against it yet.`)+`</p>`;
+  }
+
+  html+=`<p><b>What is moving.</b> Cost per meal is <span class="val-bad">${costChg>0?"+":""}${costChg.toFixed(1)}%</span> `+
+    `above the start of the quarter and missed target in all ${misses(cost)} of the last ${WINDOW} weeks — the only KPI `+
+    `still getting worse. On-time delivery (${fmt(otd.data[n-1],otd.dec)}${otd.unit}), cycle time `+
+    `(${fmt(cyc.data[n-1],cyc.dec)}${cyc.unit}) and productivity (${fmt(prod.data[n-1],prod.dec)}${prod.unit}) all improved again `+
+    `after the measures started.</p>`;
+
+  /* ---- next steps: short, plain, at most three, always tied to a KPI ---- */
+  const cand=[];
+  if(misses(cost)>=2) cand.push({score:3,
+    t:`<b>Cost per meal — trend.</b> Up ${costChg.toFixed(1)}% since ${weeks[0]} and over target in all ${misses(cost)} of the last ${WINDOW} weeks, `+
+      `with no turn yet. Split it into ingredients, overtime and waste before the next dialogue.`});
+  if(misses(cyc)>=2) cand.push({score:2.5,
+    t:`<b>Time per order — trend tied to volume.</b> Above target for ${misses(cyc)} weeks while volume runs `+
+      `${volChg>0?"+":""}${volChg.toFixed(0)}% against plan. Decide this week whether the extra people at the midday peak stay `+
+      `while volume is high.`});
+  const spike=flags.find(f=>f.sev==="crit");
+  if(spike) cand.push({score:2,
+    t:`<b>${spike.kpi.name} — one-off, not a trend.</b> The peak in ${spike.week} came with the supplier change and the `+
+      `number is back under target. Keep the incoming check for two more weeks, then confirm it can stop.`});
+  const acts=cand.sort((a,b)=>b.score-a.score).slice(0,3).map(c=>c.t);
+  if(!acts.length) acts.push("Operations are stable — hold the corridor and watch for early signals.");
+
+  html+=`<div class="actions"><h3>Recommended next steps</h3>`+
+    acts.map((a,i)=>`<div class="action"><span class="n">${String(i+1).padStart(2,"0")}</span><span>${a}</span></div>`).join("")+
+    `</div>`;
+
+  document.getElementById("summaryBody").innerHTML=html;
+}
+
+/* ---------- init ---------- */
+renderKPIs();
+renderToggle();
+renderChart();
+renderRadar();
+renderMeasures();
+renderSummary();
+select("otd");
+</script>
+</body>
+</html>

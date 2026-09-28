@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Portfolio — Operational Excellence &amp; AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F2F2F0; --card:#FFFFFF; --ash:#EDEDEA; --ink:#15171A; --ink-2:#4A4F57; --ink-3:#8B9099;
+    --line:#DEDEDA; --line-2:#E9E9E5;
+    --c1:#1F5FBF; --c1-tint:#E8F0FB;
+    --c2:#0B7C6C; --c2-tint:#E2F1EE;
+    --c3:#C2571A; --c3-tint:#FAEBDF;
+    --shadow:0 1px 2px rgba(20,22,26,.04), 0 10px 28px rgba(20,22,26,.06);
+    --shadow-hi:0 2px 6px rgba(20,22,26,.07), 0 20px 44px rgba(20,22,26,.11);
+    --r:18px;
+    box-sizing:border-box;
+    padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#0C0D0F; --card:#16181B; --ash:#1B1E22; --ink:#F2F3F5; --ink-2:#B4B9C1; --ink-3:#868C95;
+      --line:#292C31; --line-2:#212429;
+      --c1:#7FA9F0; --c1-tint:#141C2A; --c2:#46C1AC; --c2-tint:#0E231F; --c3:#EB8F4F; --c3-tint:#291A11;
+      --shadow:0 1px 2px rgba(0,0,0,.5), 0 12px 30px rgba(0,0,0,.45);
+      --shadow-hi:0 2px 8px rgba(0,0,0,.55), 0 22px 50px rgba(0,0,0,.55);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0C0D0F; --card:#16181B; --ash:#1B1E22; --ink:#F2F3F5; --ink-2:#B4B9C1; --ink-3:#868C95;
+    --line:#292C31; --line-2:#212429;
+    --c1:#7FA9F0; --c1-tint:#141C2A; --c2:#46C1AC; --c2-tint:#0E231F; --c3:#EB8F4F; --c3-tint:#291A11;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%; scroll-padding-top:env(safe-area-inset-top,0px)}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:Inter,-apple-system,BlinkMacSystemFont,system-ui,"Segoe UI",sans-serif;
+    font-size:16.5px;line-height:1.5;letter-spacing:-.008em;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1000px;margin:0 auto;padding:clamp(18px,3.5vw,40px) clamp(16px,4vw,32px) 60px}
+  a{color:inherit}
+
+  /* ---------- shared label styles ---------- */
+  .lab{font-size:11px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3)}
+  .rule{height:1px;background:var(--line);margin:34px 0 20px}
+
+  /* ---------- home ---------- */
+  .hero{padding:clamp(20px,5vw,52px) 0 clamp(22px,4vw,38px);max-width:60ch}
+  h1.name{font-size:clamp(27px,4vw,38px);font-weight:700;
+    letter-spacing:-.015em;line-height:1.1;margin:10px 0 0}
+  .intro{color:var(--ink-2);margin:18px 0 0;font-size:17.5px;line-height:1.55}
+  .intro + .intro{margin-top:11px}
+
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media(max-width:880px){.grid{grid-template-columns:1fr}}
+  .tile{position:relative;display:flex;flex-direction:column;text-decoration:none;background:var(--card);
+    border:1px solid var(--line);border-radius:var(--r);padding:24px 22px 20px;box-shadow:var(--shadow);
+    overflow:hidden;transition:transform .2s cubic-bezier(.2,.7,.3,1),box-shadow .2s ease}
+  .tile::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:var(--accent)}
+  .tile:hover{transform:translateY(-3px);box-shadow:var(--shadow-hi)}
+  .tile .ic{width:44px;height:44px;border-radius:12px;background:var(--tint);display:flex;
+    align-items:center;justify-content:center;margin-bottom:16px}
+  .tile .kind{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--accent);margin-bottom:7px}
+  .tile h2{font-size:20px;font-weight:700;margin:0;
+    letter-spacing:-.01em}
+  .tile p{color:var(--ink-2);font-size:15px;margin:9px 0 0;flex:1}
+  .tile .foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:18px;
+    padding-top:13px;border-top:1px solid var(--line-2);font-size:12.5px;color:var(--ink-3)}
+  .tile .foot .go{color:var(--accent);font-weight:600;white-space:nowrap}
+
+  /* ---------- case head ---------- */
+  .back{display:inline-flex;align-items:center;gap:7px;font-size:14.5px;color:var(--ink-3);
+    text-decoration:none;font-weight:500;margin-bottom:22px}
+  .back:hover{color:var(--ink)}
+  .chead{display:flex;gap:18px;align-items:flex-start}
+  .chead .ic{width:54px;height:54px;border-radius:15px;background:var(--tint);flex:none;display:flex;
+    align-items:center;justify-content:center}
+  .chead .kind{font-size:11px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--accent)}
+  .chead h1{font-size:clamp(26px,3.8vw,36px);font-weight:700;
+    letter-spacing:-.015em;margin:5px 0 0;line-height:1.12}
+  .stand{max-width:64ch;color:var(--ink-2);font-size:17.5px;margin:16px 0 0;line-height:1.5}
+  .cta{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:20px}
+  .btn{display:inline-flex;align-items:center;gap:9px;text-decoration:none;font-size:15.5px;font-weight:600;
+    padding:13px 22px;border-radius:10px;background:var(--accent);color:#fff;
+    transition:transform .16s ease,filter .16s ease}
+  .btn:hover{transform:translateY(-1px);filter:brightness(1.07)}
+  .btn[aria-disabled="true"]{opacity:.38;pointer-events:none}
+  .btn.ghost{background:transparent;color:var(--ink-2);border:1px solid var(--line);font-weight:600}
+  .btn.ghost:hover{filter:none;border-color:var(--ink-3)}
+  .cta .side{font-size:13.5px;color:var(--ink-3)}
+
+  /* ---------- at a glance ---------- */
+  .glance{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);
+    border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-top:24px}
+  @media(max-width:760px){.glance{grid-template-columns:1fr}}
+  .glance > div{background:var(--ash);padding:20px 20px 18px;position:relative}
+  .glance > div::before{content:"";position:absolute;left:20px;right:-1px;top:0;height:2px;
+    background:var(--accent);opacity:.18}
+  .glance > div:first-child::before{left:20px}
+  .glance > div::after{content:"";position:absolute;left:20px;top:-3px;width:8px;height:8px;
+    border-radius:50%;background:var(--accent);opacity:.55}
+  @media(max-width:760px){.glance > div::before{left:0;right:0}.glance > div::after{left:20px}}
+  .glance .k{display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--accent);display:flex;align-items:center;gap:6px}
+  .glance .v{margin-top:7px;color:var(--ink);font-size:15.5px;line-height:1.4}
+  .glance .v b{font-weight:600}
+
+  /* ---------- sections ---------- */
+  .sec{margin-top:32px}
+  .sec > .h{display:flex;align-items:center;gap:14px;margin-bottom:14px;padding:11px 16px;
+    background:var(--tint);border-left:3px solid var(--accent);border-radius:0 10px 10px 0}
+  .sec > .h .num{font-size:19px;font-weight:700;color:var(--accent);letter-spacing:0;line-height:1}
+  .sec > .h h2{font-size:18px;font-weight:700;margin:0;letter-spacing:-.01em;color:var(--ink)}
+  .lead{color:var(--ink-2);max-width:68ch;margin:0 0 4px}
+
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px}
+  @media(max-width:820px){.cards{grid-template-columns:1fr}}
+  .cards.two{grid-template-columns:repeat(2,1fr)}
+  @media(max-width:820px){.cards.two{grid-template-columns:1fr}}
+  .cd{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px;
+    box-shadow:var(--shadow)}
+  .cd .n{font-size:22px;font-weight:600;color:var(--accent);
+    line-height:1;opacity:.55}
+  .cd h3{font-size:15.5px;font-weight:600;margin:9px 0 0;letter-spacing:-.01em}
+  .cd p{color:var(--ink-2);font-size:14.5px;margin:6px 0 0}
+  .cd .ic{color:var(--accent);margin-bottom:10px;display:block}
+
+  /* ---------- flow ---------- */
+  .flow{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:0;align-items:stretch;
+    border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:16px;background:var(--card)}
+  @media(max-width:820px){.flow{grid-auto-flow:row}}
+  .st{padding:16px 16px;border-right:1px solid var(--line-2);position:relative}
+  .st:last-child{border-right:none}
+  @media(max-width:820px){.st{border-right:none;border-bottom:1px solid var(--line-2)}
+    .st:last-child{border-bottom:none}}
+  .st .s{font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+  .st .t{font-size:15px;font-weight:600;margin-top:6px}
+  .st .d{font-size:13.5px;color:var(--ink-2);margin-top:4px}
+  .st.hl{background:var(--tint)}
+  .st.hl .s{color:var(--accent)}
+
+  /* ---------- before / after ---------- */
+  .ba{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);
+    border-radius:14px;overflow:hidden;margin-top:16px}
+  @media(max-width:700px){.ba{grid-template-columns:1fr}}
+  .ba > div{padding:18px 20px;background:var(--card)}
+  .ba .before{background:var(--ash)}
+  .ba .k{font-size:10.5px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3)}
+  .ba .after .k{color:var(--accent)}
+  .ba .row{display:flex;gap:10px;margin-top:11px;color:var(--ink-2);font-size:14.5px;line-height:1.42}
+  .ba .row span:first-child{flex:none;width:16px;color:var(--ink-3);font-weight:600}
+  .ba .after .row span:first-child{color:var(--accent)}
+
+  /* ---------- quote / limitation / origin ---------- */
+  .pull{border-left:3px solid var(--accent);padding:4px 0 4px 18px;margin-top:22px;
+    font-size:19.5px;line-height:1.4;color:var(--ink);max-width:56ch}
+  .limit{display:flex;gap:12px;background:var(--ash);border:1px solid var(--line);border-radius:14px;
+    padding:16px 18px;margin-top:18px}
+  .limit svg{flex:none;color:var(--ink-3);margin-top:2px}
+  .limit p{margin:0;color:var(--ink-2);font-size:14.5px;max-width:70ch}
+  .limit b{color:var(--ink);font-weight:600}
+  .origin{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);
+    border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:16px}
+  @media(max-width:760px){.origin{grid-template-columns:1fr}}
+  .origin > div{background:var(--card);padding:16px 18px}
+  .origin .k{display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:600;letter-spacing:.13em;
+    text-transform:uppercase;color:var(--accent)}
+  .origin .v{color:var(--ink-2);font-size:14.5px;margin-top:6px}
+  .note{font-size:13px;color:var(--ink-3);margin-top:16px;max-width:70ch}
+  footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--line);font-size:13px;
+    color:var(--ink-3);line-height:1.9}
+
+  .view{display:none} .view.on{display:block;animation:in .3s cubic-bezier(.2,.7,.3,1)}
+  @keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+  /* overview card meta */
+  .tile .meta{margin-top:14px;display:flex;flex-direction:column;gap:7px}
+  .tile .meta > div{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--ink-3);
+    line-height:1.35}
+  .tile .meta > div > span:first-child{color:var(--accent);flex:none;margin-top:1px;display:flex}
+  .tile .meta b{color:var(--ink-2);font-weight:600}
+  /* bullets */
+  ul.bul{list-style:none;margin:0;padding:0}
+  ul.bul li{position:relative;padding-left:26px;margin-top:10px;color:var(--ink-2);max-width:74ch;
+    font-size:15.5px}
+  ul.bul li:first-child{margin-top:0}
+  ul.bul li::before{content:"";position:absolute;left:6px;top:9px;width:7px;height:7px;border-radius:2px;
+    background:var(--accent);opacity:.7}
+  /* origin box */
+  .origin-box{display:flex;gap:13px;align-items:flex-start;margin:18px 0 0;max-width:74ch;
+    background:var(--tint);border:1px solid var(--line);border-left:3px solid var(--accent);
+    border-radius:0 12px 12px 0;padding:14px 18px}
+  .origin-box > svg{flex:none;margin-top:2px;color:var(--accent)}
+  .origin-box .k{font-size:10.5px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--accent)}
+  .origin-box p{margin:5px 0 0;color:var(--ink-2);font-size:15px;line-height:1.45}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ============ HOME ============ -->
+<section class="view on" id="home">
+  <div class="hero">
+    <div class="lab">Portfolio</div>
+    <h1 class="name">[Your name]</h1>
+    <p class="intro">Operational excellence, performance management and process design. Seven years in
+    airline catering, aviation and e-mobility.</p>
+    <p class="intro">Below are three things I built with AI. Two come from problems I ran into at work,
+    one from everyday life. Each page describes the problem, how the tool works and what it changes —
+    two of them can be tried out directly.</p>
+  </div>
+
+  <div class="lab" style="margin-bottom:14px">Use case examples</div>
+  <div class="grid">
+
+    <a class="tile" href="#/triage" style="--accent:var(--c1);--tint:var(--c1-tint)">
+      <div class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--c1)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-5l-2 3H9l-2-3H2"/><path d="M5.5 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.7 1.1z"/></svg></div>
+      <div class="kind">Agent workflow</div>
+      <h2>Service ticket triage</h2>
+      <p>A customer service team gets its inbox pre-sorted. Routine requests arrive with a draft reply
+      ready to send; anything sensitive is routed to a person before it can be answered
+      automatically.</p>
+      <div class="meta">
+        <div><span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M10 21v-5h4v5"/></svg></span><span><b>Insurance</b>, or any service organisation with an inbound
+          queue</span></div>
+        <div><span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 5.5a3 3 0 0 1 0 5.5"/><path d="M18 20a5.5 5.5 0 0 0-2.5-4.3"/></svg></span><span>Customer service operations, first level</span></div>
+        <div><span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6 7-11a7 7 0 1 0-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></span><span>Several hundred requests a day</span></div>
+      </div>
+      <div class="foot"><span>Run report · 12 tickets</span><span class="go">Open →</span></div>
+    </a>
+
+    <a class="tile" href="#/cockpit" style="--accent:var(--c2);--tint:var(--c2-tint)">
+      <div class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--c2)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M6 20v-6"/><path d="M11 20V8"/><path d="M16 20v-9"/><path d="M21 20V5"/></svg></div>
+      <div class="kind">Performance dialogue</div>
+      <h2>Operations cockpit</h2>
+      <p>The board for a weekly performance dialogue in a production operation. Filled from the figures
+      that arrive by mail, it says which deviations are one-off and which keep repeating, and carries the
+      agreed measures — with owner and due date — until they are closed.</p>
+      <div class="meta">
+        <div><span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M10 21v-5h4v5"/></svg></span><span><b>Airline catering</b>, transferable to any production
+          operation</span></div>
+        <div><span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 5.5a3 3 0 0 1 0 5.5"/><path d="M18 20a5.5 5.5 0 0 0-2.5-4.3"/></svg></span><span>Operations performance management</span></div>
+        <div><span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6 7-11a7 7 0 1 0-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></span><span>Weekly performance dialogue, six KPIs</span></div>
+      </div>
+      <div class="foot"><span>Live demo</span><span class="go">Open →</span></div>
+    </a>
+
+    <a class="tile" href="#/workout" style="--accent:var(--c3);--tint:var(--c3-tint)">
+      <div class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--c3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6"/><path d="M7 7v10"/><path d="M17 7v10"/><path d="M20 9v6"/><path d="M7 12h10"/></svg></div>
+      <div class="kind">Personal app</div>
+      <h2>Workout generator</h2>
+      <p>Five questions produce a training session that fits the equipment at hand, the time available
+      and any injury — and then guides you through it step by step with a timer.</p>
+      <div class="meta">
+        <div><span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M10 21v-5h4v5"/></svg></span><span><b>Private</b> / consumer app</span></div>
+        <div><span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 5.5a3 3 0 0 1 0 5.5"/><path d="M18 20a5.5 5.5 0 0 0-2.5-4.3"/></svg></span><span>A recurring planning decision</span></div>
+        <div><span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6 7-11a7 7 0 1 0-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></span><span>At home or in a small gym</span></div>
+      </div>
+      <div class="foot"><span>Live demo</span><span class="go">Open →</span></div>
+    </a>
+
+  </div>
+
+  <footer>All three run on synthetic data. No employer, client or customer data anywhere on this site.<br>
+    [your email] · [your LinkedIn URL]</footer>
+</section>
+
+<!-- ============ CASE 1 ============ -->
+<section class="view" id="triage" style="--accent:var(--c1);--tint:var(--c1-tint)">
+  <a class="back" href="#/">← All use cases</a>
+  <div class="chead">
+    <div class="ic"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--c1)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-5l-2 3H9l-2-3H2"/><path d="M5.5 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.7 1.1z"/></svg></div>
+    <div><div class="kind">Agent workflow</div><h1>Service ticket triage</h1></div>
+  </div>
+  <p class="stand">Customer service inboxes are mostly routine with a few cases that are anything but.
+  This agent reads every incoming message, decides whether it can be answered, and writes the reply — so
+  the team confirms and sends instead of composing from scratch. Anything sensitive is taken out of the
+  automated path by a fixed rule and handed to a person, together with a note on what to check first.
+  Shown on twelve synthetic requests from an insurer's inbox.</p>
+
+  <div class="origin-box"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.5.4.8 1 .8 1.6v.5h5.4v-.5c0-.6.3-1.2.8-1.6A6 6 0 0 0 12 3z"/></svg><div><div class="k">Where this came from</div>
+    <p>Working alongside service teams, the pattern was always the same: the sorting effort repeats
+    hundreds of times a day, while the cases that genuinely need judgement are the rare ones.</p></div>
+  </div>
+
+  <div class="cta">
+    <a class="btn" href="report.html">Read the run report</a>
+    <span class="side">One complete run · 12 tickets · every decision listed</span>
+  </div>
+
+  <div class="glance">
+    <div><div class="k"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16.5h.01"/></svg>Situation</div><div class="v">One unsorted inbox, worked in the order
+      things arrived</div></div>
+    <div><div class="k"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h7"/><path d="M16 6h4"/><circle cx="13.5" cy="6" r="2.2"/><path d="M4 12h9"/><path d="M18 12h2"/><circle cx="15.5" cy="12" r="2.2"/><path d="M4 18h5"/><path d="M14 18h6"/><circle cx="11.5" cy="18" r="2.2"/></svg>What it does</div><div class="v">Reads each message, sorts it, writes
+      the reply or the briefing for a person</div></div>
+    <div><div class="k"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>Effect</div><div class="v">3 of 12 came back ready to send, 8 went to a
+      case handler, 1 was spam</div></div>
+  </div>
+
+  <div class="sec">
+    <div class="h"><span class="num">01</span><h2>The problem</h2></div>
+    <ul class="bul">
+      <li>Everything lands in one inbox as free text, so the priority of a request only becomes visible
+      once somebody has read the whole thing</li>
+      <li>Experienced case handlers spend the day on questions a standard answer would cover</li>
+      <li>The cases that need a fast reaction — suspected fraud, a changed bank account, a cancellation
+      — are found late, often only after the customer writes a second time</li>
+      <li>How to sort is nowhere written down; it sits with the experienced staff, so the quality
+      depends on who is on shift</li>
+    </ul>
+  </div>
+
+  <div class="sec">
+    <div class="h"><span class="num">02</span><h2>How it works</h2></div>
+    <p class="lead">One message in, one finished proposal out. Nothing is ever sent to a customer — every
+    output waits for a person to confirm it.</p>
+    <div class="flow">
+      <div class="st"><div class="s">In</div><div class="t">A free-text message</div>
+        <div class="d">Whatever the customer wrote. No form, no category, no priority.</div></div>
+      <div class="st"><div class="s">Step 1</div><div class="t">Sorted into one of four</div>
+        <div class="d">Answer it, ask for what is missing, hand it to a person, or set it aside as
+        spam.</div></div>
+      <div class="st hl"><div class="s">Step 2</div><div class="t">Checked against fixed rules</div>
+        <div class="d">Fraud, payment changes, cancellations, refund disputes, legal threats and injury
+        always go to a person — whatever the agent concluded.</div></div>
+      <div class="st"><div class="s">Out</div><div class="t">A reply or a briefing</div>
+        <div class="d">A draft ready to send, a question back to the customer, or what the case handler
+        should check first.</div></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="h"><span class="num">03</span><h2>What it changes</h2></div>
+    <p class="lead">Measured on a full run: three of twelve tickets came back finished, two answers and
+    one question back to the customer. Everything contractual or financial the agent passed to a person
+    on its own — so the realistic saving is about a quarter of the volume, not half. The rule had to step
+    in once, on the ticket that said nothing beyond “something isn't right”.</p>
+    <div class="ba">
+      <div class="before"><div class="k">Before</div>
+        <div class="row"><span>·</span><span>Read, sort and compose for every single request</span></div>
+        <div class="row"><span>·</span><span>Escalation depends on experience and on how full the queue
+          is</span></div>
+        <div class="row"><span>·</span><span>No data on how the volume actually splits</span></div></div>
+      <div class="after"><div class="k">After</div>
+        <div class="row"><span>→</span><span>Confirm and send for the routine share</span></div>
+        <div class="row"><span>→</span><span>Sensitive cases leave the automated path by rule, with a
+          briefing attached</span></div>
+        <div class="row"><span>→</span><span>Every decision logged, so the next automation step can be
+          argued with numbers</span></div></div>
+    </div>
+  </div>
+
+  <div class="limit">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16.5h.01"/></svg>
+    <p><b>Limitation.</b> The demo works on files. In a live setting the same workflow would sit on the
+    ticket system or the CRM and write its proposal back as an internal note — the division of labour
+    stays the same: the agent proposes, the rules decide, a person sends.</p>
+  </div>
+
+  <p class="note">Twelve synthetic insurance tickets, no real customer data.</p>
+</section>
+
+<!-- ============ CASE 2 ============ -->
+<section class="view" id="cockpit" style="--accent:var(--c2);--tint:var(--c2-tint)">
+  <a class="back" href="#/">← All use cases</a>
+  <div class="chead">
+    <div class="ic"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--c2)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M6 20v-6"/><path d="M11 20V8"/><path d="M16 20v-9"/><path d="M21 20V5"/></svg></div>
+    <div><div class="kind">Performance dialogue</div><h1>Operations cockpit</h1></div>
+  </div>
+  <p class="stand">The board for a weekly performance dialogue, the format used on the production floor
+  and in the management review, here with six KPIs of an airline catering unit. It is filled from the
+  figures that arrive by mail, marks whether a deviation is a single bad week or a repeated miss, and
+  carries every agreed measure — owner, due date, status, effect — until it is closed.</p>
+  <div class="origin-box"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.5.4.8 1 .8 1.6v.5h5.4v-.5c0-.6.3-1.2.8-1.6A6 6 0 0 0 12 3z"/></svg><div><div class="k">Where this came from</div><p>Preparing the weekly service and
+  after-sales reporting, the preparation itself was the inefficient part — collecting and retyping
+  figures that were already written down somewhere.</p></div></div>
+  <div class="cta">
+    <a class="btn" href="cockpit.html">Open the cockpit</a>
+    <span class="side">Synthetic data · 13 weeks · 6 KPIs · opens in this browser</span>
+  </div>
+
+  <div class="glance">
+    <div><div class="k"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16.5h.01"/></svg>Situation</div><div class="v">Figures arrive as prose in mails and are
+      retyped by hand every week</div></div>
+    <div><div class="k"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h7"/><path d="M16 6h4"/><circle cx="13.5" cy="6" r="2.2"/><path d="M4 12h9"/><path d="M18 12h2"/><circle cx="15.5" cy="12" r="2.2"/><path d="M4 18h5"/><path d="M14 18h6"/><circle cx="11.5" cy="18" r="2.2"/></svg>What it does</div><div class="v">Reads the mails, checks the values, sorts the deviations
+      and tracks the measures agreed on them</div></div>
+    <div><div class="k"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>Effect</div><div class="v">The review starts with the discussion instead
+      of the status</div></div>
+  </div>
+
+  <div class="sec">
+    <div class="h"><span class="num">01</span><h2>The problem</h2></div>
+    <ul class="bul">
+      <li>The figures come in as sentences in mails from shift leads, quality and controlling — roughly
+      an hour a week goes into transferring them into the board</li>
+      <li>The meeting spends its first half establishing what the numbers did, in slide order rather
+      than by importance</li>
+      <li>A one-off outlier and a two-month drift get the same airtime, although one needs a cause and
+      the other a decision</li>
+      <li>Agreed measures live in the minutes and come back only if somebody remembers them</li>
+    </ul>
+  </div>
+
+  <div class="sec">
+    <div class="h"><span class="num">02</span><h2>How it works</h2></div>
+    <div class="flow">
+      <div class="st hl"><div class="s">Step 1</div><div class="t">Collect</div>
+        <div class="d">A scheduled run reads the KPI mails through the Gmail connector.</div></div>
+      <div class="st"><div class="s">Step 2</div><div class="t">Check</div>
+        <div class="d">Each value is tested against a plausible range; anything not found is marked,
+        not guessed.</div></div>
+      <div class="st"><div class="s">Step 3</div><div class="t">Interpret</div>
+        <div class="d">Outliers, trends and target gaps computed; reasons named in the mails carried
+        into the summary.</div></div>
+      <div class="st"><div class="s">Step 4</div><div class="t">Track &amp; send</div>
+        <div class="d">Measures stay on the board with owner and due date until closed; after
+        confirmation, board and weekly slide go to the distribution list.</div></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="h"><span class="num">03</span><h2>What it changes</h2></div>
+    <div class="ba">
+      <div class="before"><div class="k">Before</div>
+        <div class="row"><span>·</span><span>About an hour of manual data transfer per week</span></div>
+        <div class="row"><span>·</span><span>Status reporting fills the first half of the meeting</span></div>
+        <div class="row"><span>·</span><span>Reasons retold from memory, measures in the minutes</span></div></div>
+      <div class="after"><div class="k">After</div>
+        <div class="row"><span>→</span><span>A short review of what was recognised</span></div>
+        <div class="row"><span>→</span><span>Outliers and trends already separated, each with a proposed
+          next step</span></div>
+        <div class="row"><span>→</span><span>Context from the mails in the summary; every measure with
+          owner, due date and its effect on the KPI, week after week until closed</span></div></div>
+    </div>
+  </div>
+
+  <div class="limit">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16.5h.01"/></svg>
+    <p><b>Limitation.</b> The public demo shows the board on synthetic data. Reading the mails and
+    sending the weekly slide belong to the workflow around it and run in a private environment, since
+    they touch a real mailbox.</p>
+  </div>
+  <p class="note">Built with Claude. One HTML file, no backend. Outliers, trend and target comparison are
+  computed rather than generated; the model reads the mails and phrases the summary, and the page says
+  which part is which.</p>
+</section>
+
+<!-- ============ CASE 3 ============ -->
+<section class="view" id="workout" style="--accent:var(--c3);--tint:var(--c3-tint)">
+  <a class="back" href="#/">← All use cases</a>
+  <div class="chead">
+    <div class="ic"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--c3)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6"/><path d="M7 7v10"/><path d="M17 7v10"/><path d="M20 9v6"/><path d="M7 12h10"/></svg></div>
+    <div><div class="kind">Personal app</div><h1>Workout generator</h1></div>
+  </div>
+  <p class="stand">Five questions — equipment, level, focus, time, and a free field for injuries or
+  anything else to consider — produce a session built for exactly that situation. It then runs step by
+  step with a timer, from warm-up to cool-down. Takes about thirty seconds to try.</p>
+  <div class="origin-box"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.5.4.8 1 .8 1.6v.5h5.4v-.5c0-.6.3-1.2.8-1.6A6 6 0 0 0 12 3z"/></svg><div><div class="k">Where this came from</div><p>My own week. Training slots are short
+  and turn up unannounced, and the deciding what to do was reliably eating the slot.</p></div></div>
+  <div class="cta">
+    <a class="btn" href="workout.html">Generate a workout</a>
+    <a class="btn ghost" href="https://claude.ai/artifact/K67Vf9s6Tm3rF68chMDpXx">Live version with Claude</a>
+    <span class="side">The live version needs a Claude account; the button on the left always works</span>
+  </div>
+
+  <div class="glance">
+    <div><div class="k"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16.5h.01"/></svg>Situation</div><div class="v">Short, unplanned slots; the deciding eats
+      the time</div></div>
+    <div><div class="k"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h7"/><path d="M16 6h4"/><circle cx="13.5" cy="6" r="2.2"/><path d="M4 12h9"/><path d="M18 12h2"/><circle cx="15.5" cy="12" r="2.2"/><path d="M4 18h5"/><path d="M14 18h6"/><circle cx="11.5" cy="18" r="2.2"/></svg>What it does</div><div class="v">Five inputs in, a personalised guided
+      session out</div></div>
+    <div><div class="k"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>Effect</div><div class="v">Training starts immediately and fits the
+      minutes available</div></div>
+  </div>
+
+  <div class="sec">
+    <div class="h"><span class="num">01</span><h2>The problem</h2></div>
+    <ul class="bul">
+      <li>Equipment, focus and whatever currently hurts change from week to week, so a written plan goes
+      stale</li>
+      <li>Choosing exercises, order and duration takes ten minutes of a thirty-minute window</li>
+      <li>Asking a chatbot produces something plausible that uses equipment which isn't there</li>
+      <li>And the session described as thirty minutes is over in twenty-four</li>
+    </ul>
+  </div>
+
+  <div class="sec">
+    <div class="h"><span class="num">02</span><h2>How it works</h2></div>
+    <div class="flow">
+      <div class="st"><div class="s">Step 1</div><div class="t">Five questions</div>
+        <div class="d">Equipment, level, focus, time — plus a free field for injuries or a low-energy
+        day.</div></div>
+      <div class="st hl"><div class="s">Step 2</div><div class="t">Session built</div>
+        <div class="d">Only the equipment selected, the exact minutes available, every exercise
+        explained.</div></div>
+      <div class="st"><div class="s">Step 3</div><div class="t">Guided run</div>
+        <div class="d">Warm-up, work, rest and cool-down, one screen at a time with a timer.</div></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="h"><span class="num">03</span><h2>What it changes</h2></div>
+    <div class="ba">
+      <div class="before"><div class="k">Before</div>
+        <div class="row"><span>·</span><span>Ten minutes of deciding before anything starts</span></div>
+        <div class="row"><span>·</span><span>Plans that ignore the knee and the kettlebell</span></div>
+        <div class="row"><span>·</span><span>Sessions that overrun or end early</span></div></div>
+      <div class="after"><div class="k">After</div>
+        <div class="row"><span>→</span><span>Thirty seconds of input, then training</span></div>
+        <div class="row"><span>→</span><span>Only the equipment at hand, injuries taken into
+          account</span></div>
+        <div class="row"><span>→</span><span>The time available, used exactly, guided by a timer</span></div></div>
+    </div>
+  </div>
+
+  <p class="note">Built with Claude. One HTML file, no backend. The timing is calculated rather than
+  requested, the answer is checked against the selection before it is shown, and if Claude is
+  unavailable a built-in exercise library produces the session instead. Not medical advice.</p>
+</section>
+
+</div>
+
+<script>
+(function () {
+  var views = Array.prototype.slice.call(document.querySelectorAll(".view"));
+  var titles = { home: "Portfolio — Operational Excellence & AI",
+                 triage: "Service ticket triage — Portfolio",
+                 cockpit: "Operations cockpit — Portfolio",
+                 workout: "Workout generator — Portfolio" };
+  function show() {
+    var id = (location.hash || "#/").replace("#/", "") || "home";
+    if (!document.getElementById(id)) id = "home";
+    views.forEach(function (v) { v.classList.toggle("on", v.id === id); });
+    document.title = titles[id] || titles.home;
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener("hashchange", show);
+  show();
+})();
+</script>
+</body>
+</html>

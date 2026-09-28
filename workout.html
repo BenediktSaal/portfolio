@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Workout Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: dark;
+    --bg:#0E1420; --surface:#161F2E; --surface2:#1E2A3D; --line:#293751;
+    --work:#FF7A29; --work-soft:rgba(255,122,41,.14);
+    --rest:#2DD4BF; --rest-soft:rgba(45,212,191,.13);
+    --info:#F6C453; --info-soft:rgba(246,196,83,.12);
+    --text:#EEF3F9; --muted:#8798AE; --danger:#FF6B6B;
+    box-sizing:border-box;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text)}
+  body{
+    font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+    padding:22px 16px 48px;line-height:1.45;-webkit-text-size-adjust:100%;
+  }
+  .wrap{max-width:560px;margin:0 auto}
+  .wrap.wide{max-width:640px}
+  .eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;color:var(--muted)}
+  .eyebrow.work{color:var(--work)} .eyebrow.rest{color:var(--rest)} .eyebrow.info{color:var(--info)}
+  h1{font-size:27px;font-weight:800;letter-spacing:-.02em;margin:22px 0 4px}
+  h1.big{font-size:32px;margin:0 0 8px}
+  p.sub{color:var(--muted);margin:0;font-size:14px}
+  .bar{height:6px;background:var(--surface2);border-radius:99px;overflow:hidden;margin-top:8px}
+  .bar > i{display:block;height:100%;border-radius:99px;transition:width .3s}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .chip{padding:10px 14px;border-radius:12px;cursor:pointer;border:1px solid var(--line);
+    background:var(--surface);color:var(--text);font:500 14px Inter,system-ui,sans-serif;transition:all .12s}
+  .chip[aria-pressed="true"]{font-weight:700;color:var(--bg)}
+  .chip.work[aria-pressed="true"]{background:var(--work);border-color:var(--work)}
+  .chip.rest[aria-pressed="true"]{background:var(--rest);border-color:var(--rest)}
+  .btn{width:100%;margin-top:24px;padding:16px;border-radius:14px;border:none;cursor:pointer;
+    font:800 16px Inter,system-ui,sans-serif;background:var(--work);color:var(--bg)}
+  .btn:disabled{background:var(--surface2);color:var(--muted);cursor:not-allowed}
+  .btn.rest{background:var(--rest)}
+  .btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line);font-weight:600;
+    font-size:14px;padding:13px;margin-top:10px}
+  .link{background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;padding:0;font-family:inherit}
+  textarea{width:100%;margin-top:16px;resize:vertical;background:var(--surface);color:var(--text);
+    border:1px solid var(--line);border-radius:12px;padding:12px 14px;font:400 14px Inter,system-ui,sans-serif;outline:none}
+  .hint{color:var(--muted);font-size:12px;margin-top:8px;line-height:1.5}
+  .item{padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-top:8px}
+  .item .name{font-weight:700;font-size:15px}
+  .item .meta{color:var(--muted);font-size:13px;margin-top:2px}
+  .item .cue{color:var(--muted);font-size:13px;margin-top:4px}
+  .item .sens{color:var(--muted);font-size:12px;margin-top:4px;font-style:italic}
+  .equip{text-align:center;min-width:52px;flex-shrink:0}
+  .equip .lbl{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.1}
+  .pill{display:inline-block;margin-top:12px;padding:5px 12px;border-radius:99px;font-size:12px;font-weight:700;
+    background:var(--work-soft);border:1px solid var(--work);color:var(--work)}
+  .note{margin-top:16px;padding:12px 14px;border-radius:12px;font-size:14px;
+    background:var(--info-soft);border:1px solid var(--info)}
+  .note b{color:var(--info)}
+  .note.plain{background:var(--surface);border-color:var(--line);color:var(--muted);font-size:13px}
+  .section{margin-top:20px}
+  .disclaimer{color:var(--muted);font-size:12px;margin-top:18px;line-height:1.5}
+  .center{text-align:center}
+  .spinner{width:54px;height:54px;border-radius:50%;margin:0 auto 20px;
+    border:3px solid var(--surface2);border-top-color:var(--work);animation:spin .9s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .stage{margin-top:18px;border-radius:20px;padding:26px 22px;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;text-align:center;min-height:340px}
+  .stage .title{font-size:26px;font-weight:800;margin:10px 0 4px;letter-spacing:-.01em}
+  .clock{font-size:76px;font-weight:800;margin:14px 0 6px;font-variant-numeric:tabular-nums;line-height:1}
+  .reps{font-size:52px;font-weight:800;margin:14px 0 6px}
+  .reps span{font-size:22px;color:var(--muted);font-weight:600}
+  .cue-big{font-size:15px;max-width:380px;margin-top:6px;line-height:1.45}
+  .controls{display:flex;gap:10px;margin-top:16px}
+  .controls button{padding:14px;border-radius:12px;border:1px solid var(--line);background:transparent;
+    color:var(--muted);font:600 15px Inter,system-ui,sans-serif;cursor:pointer;min-width:60px}
+  .controls button.main{flex:1;border:none;color:var(--bg);font-weight:800;font-size:16px}
+  .controls button:disabled{color:var(--line);cursor:default}
+  .logo{width:84px;height:84px;border-radius:22px;background:var(--surface);border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;margin:0 auto 24px}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app" class="wrap"></div>
+
+<script>
+"use strict";
+
+/* =====================================================================
+   Workout Generator
+   Design principle: the model picks the exercises, the code does the math.
+   Everything time-related (rounds, sets, work, rest) is computed here so
+   the session always fits the chosen duration. The model's answer is
+   validated against the user's choices; if it fails twice, a local
+   exercise library builds the workout instead.
+   ===================================================================== */
+
+/* ---------------------------------------------------------------- data */
+
+const EQUIPMENT = ["Bodyweight", "Kettlebell", "TRX"];
+const LEVELS = ["Beginner", "Intermediate", "Advanced"];
+const MUSCLE_LABELS = ["Full body", "Core", "Legs", "Glutes", "Back", "Chest", "Shoulders", "Arms"];
+const MUSCLE_KEY = { "Full body":"full", "Core":"core", "Legs":"legs", "Glutes":"glutes",
+                     "Back":"back", "Chest":"chest", "Shoulders":"shoulders", "Arms":"arms" };
+const TIMES = [15, 30, 45, 60];
+const FORMATS = [{ id:"sets", label:"Sets" }, { id:"intervals", label:"Intervals" }];
+
+// Local library — the fallback, and the pool used to top up an incomplete answer.
+const LIB = [
+  // Bodyweight
+  { n:"Air Squat", e:"Bodyweight", m:["legs","glutes","full"], t:"reps", r:"12-15",
+    c:"Feet shoulder-width, chest up. Push your hips back and down until thighs are parallel, then drive through the heels.", s:"Quads and glutes" },
+  { n:"Reverse Lunge", e:"Bodyweight", m:["legs","glutes"], t:"reps", r:"8-10 per side",
+    c:"Step one foot back and lower the back knee towards the floor. Keep the front shin upright, push back to standing.", s:"Front thigh and glute" },
+  { n:"Glute Bridge", e:"Bodyweight", m:["glutes","core"], t:"reps", r:"12-15",
+    c:"Lie on your back, feet flat and close to your hips. Lift the hips until shoulder, hip and knee line up, squeeze at the top.", s:"Glutes and hamstrings" },
+  { n:"Single-Leg Glute Bridge", e:"Bodyweight", m:["glutes","core"], t:"reps", r:"8-10 per side",
+    c:"Same as the glute bridge but with one leg extended. Keep the hips level throughout.", s:"One glute working hard" },
+  { n:"Push-Up", e:"Bodyweight", m:["chest","arms","shoulders"], t:"reps", r:"8-12",
+    c:"Hands slightly wider than shoulders, body in one line. Lower until the chest is a fist above the floor, press back up.", s:"Chest and triceps" },
+  { n:"Incline Push-Up", e:"Bodyweight", m:["chest","arms","shoulders"], t:"reps", r:"10-14",
+    c:"Hands on a table or windowsill, body in one line. Lower the chest to your hands and press back up.", s:"Chest, easier on the wrists" },
+  { n:"Pike Push-Up", e:"Bodyweight", m:["shoulders","arms"], t:"reps", r:"6-10",
+    c:"From a downward-dog shape, bend the elbows and lower the crown of the head towards the floor, then press up.", s:"Shoulders and triceps" },
+  { n:"Chair Triceps Dip", e:"Bodyweight", m:["arms","chest"], t:"reps", r:"8-12",
+    c:"Hands on a stable chair behind you, elbows pointing straight back. Lower until the elbows are at 90 degrees, press up.", s:"Back of the upper arms" },
+  { n:"Plank", e:"Bodyweight", m:["core"], t:"time",
+    c:"Forearms under the shoulders, body in one line. Squeeze the glutes and brace the belly, breathe steadily.", s:"Deep abdominals" },
+  { n:"Side Plank", e:"Bodyweight", m:["core"], t:"time",
+    c:"On one forearm, hips stacked and lifted. Keep the body in one line, swap sides halfway.", s:"Side of the trunk" },
+  { n:"Hollow Hold", e:"Bodyweight", m:["core"], t:"time",
+    c:"On your back, press the lower back into the floor and lift shoulders and legs slightly. Lower the legs if the back arches.", s:"Front of the trunk" },
+  { n:"Dead Bug", e:"Bodyweight", m:["core"], t:"reps", r:"8-10 per side",
+    c:"On your back, arms up and knees over hips. Lower the opposite arm and leg slowly while the lower back stays on the floor.", s:"Braced midsection" },
+  { n:"Bird Dog", e:"Bodyweight", m:["core","back"], t:"reps", r:"8-10 per side",
+    c:"On hands and knees, extend the opposite arm and leg until they are level with the trunk. Move slowly, no rotation.", s:"Lower back and core" },
+  { n:"Superman", e:"Bodyweight", m:["back"], t:"reps", r:"10-12",
+    c:"Face down, lift chest, arms and legs a few centimetres. Look at the floor and hold briefly at the top.", s:"Lower back" },
+  { n:"Prone Y-Raise", e:"Bodyweight", m:["back","shoulders"], t:"reps", r:"10-12",
+    c:"Face down, arms in a Y overhead with thumbs up. Lift the arms just off the floor, pulling the shoulder blades down.", s:"Upper back" },
+  { n:"Wall Sit", e:"Bodyweight", m:["legs"], t:"time",
+    c:"Back against the wall, knees at 90 degrees, weight in the heels. Keep breathing.", s:"Burning quads" },
+  { n:"Split Squat", e:"Bodyweight", m:["legs","glutes"], t:"reps", r:"8-10 per side",
+    c:"Long stance, back heel lifted. Lower straight down until the back knee nearly touches, press back up.", s:"Front thigh and glute" },
+  { n:"Mountain Climber", e:"Bodyweight", m:["core","full"], t:"time",
+    c:"From a high plank, drive the knees towards the chest one at a time. Keep the hips low and the pace steady.", s:"Core and lungs" },
+  { n:"Bear Crawl Hold", e:"Bodyweight", m:["core","full"], t:"time",
+    c:"On hands and toes with the knees hovering a few centimetres above the floor. Keep the back flat and breathe.", s:"Whole trunk" },
+  { n:"Jumping Jack", e:"Bodyweight", m:["full"], t:"time",
+    c:"Jump the feet out while the arms travel overhead, then back in. Land softly through the whole foot.", s:"Raised heart rate" },
+  { n:"High Knees", e:"Bodyweight", m:["full","legs"], t:"time",
+    c:"Run on the spot, lifting the knees to hip height. Stay tall and land on the balls of the feet.", s:"Legs and lungs" },
+  { n:"Burpee", e:"Bodyweight", m:["full"], t:"time",
+    c:"Squat down, step or jump back to a plank, come back up and stand tall. Keep a pace you can hold.", s:"Everything at once" },
+  // Kettlebell
+  { n:"Kettlebell Swing", e:"Kettlebell", m:["full","glutes","back"], t:"time",
+    c:"Hinge at the hips, hike the bell back, then snap the hips forward so it floats to chest height. The arms only guide it.", s:"Glutes and hamstrings" },
+  { n:"Goblet Squat", e:"Kettlebell", m:["legs","glutes"], t:"reps", r:"10-12",
+    c:"Hold the bell at chest height, elbows in. Sit down between the knees keeping the chest tall, then stand up.", s:"Quads and glutes" },
+  { n:"Kettlebell Deadlift", e:"Kettlebell", m:["back","glutes","legs"], t:"reps", r:"10-12",
+    c:"Bell between the feet. Push the hips back with a flat back, grip and stand up by squeezing the glutes.", s:"Back of the legs" },
+  { n:"Single-Arm Row", e:"Kettlebell", m:["back","arms"], t:"reps", r:"8-10 per side",
+    c:"Hinge forward with one hand supported. Pull the bell to the hip, leading with the elbow, then lower under control.", s:"Upper back" },
+  { n:"Kettlebell Shoulder Press", e:"Kettlebell", m:["shoulders","arms"], t:"reps", r:"6-10 per side",
+    c:"Bell racked at the shoulder, ribs down. Press overhead until the arm is straight, then lower slowly.", s:"Shoulders and triceps" },
+  { n:"Kettlebell Floor Press", e:"Kettlebell", m:["chest","arms"], t:"reps", r:"8-10 per side",
+    c:"On your back, knees bent, bell at the chest. Press straight up, then lower until the triceps touches the floor.", s:"Chest and triceps" },
+  { n:"Racked Reverse Lunge", e:"Kettlebell", m:["legs","glutes"], t:"reps", r:"6-8 per side",
+    c:"Bell racked at one shoulder. Step back, lower the knee towards the floor, drive back up staying upright.", s:"Legs and trunk" },
+  { n:"Kettlebell Russian Twist", e:"Kettlebell", m:["core"], t:"time",
+    c:"Sit leaning back slightly, heels down. Move the bell from hip to hip, rotating through the ribs, not the arms.", s:"Sides of the waist" },
+  { n:"Kettlebell Halo", e:"Kettlebell", m:["shoulders","core"], t:"time",
+    c:"Hold the bell upside down at the chest and circle it slowly around the head. Keep the ribs down, swap direction halfway.", s:"Shoulders and upper back" },
+  { n:"Kettlebell Clean", e:"Kettlebell", m:["full","back"], t:"time",
+    c:"Hike the bell back, snap the hips and guide it around the wrist into the rack. Swap sides halfway.", s:"Whole posterior chain" },
+  { n:"Farmer Carry", e:"Kettlebell", m:["core","full"], t:"time",
+    c:"Walk with the bell at one side, shoulders level and ribs down. Swap hands halfway.", s:"Grip and trunk" },
+  { n:"Suitcase Deadlift", e:"Kettlebell", m:["core","back","legs"], t:"reps", r:"8-10 per side",
+    c:"Bell beside one foot. Hinge, grip it and stand up without letting the trunk tilt sideways.", s:"Trunk resisting the tilt" },
+  // TRX
+  { n:"TRX Row", e:"TRX", m:["back","arms"], t:"reps", r:"10-12",
+    c:"Lean back with straight arms and a braced body. Pull the chest to the handles, squeezing the shoulder blades, then lower slowly.", s:"Upper back and biceps" },
+  { n:"TRX Chest Press", e:"TRX", m:["chest","arms"], t:"reps", r:"8-12",
+    c:"Facing away, body in one line. Lower the chest between the handles, then press back keeping the trunk tight.", s:"Chest and triceps" },
+  { n:"TRX Squat", e:"TRX", m:["legs","glutes"], t:"reps", r:"12-15",
+    c:"Hold the handles lightly, sit back and down to parallel, then stand. Use the straps for balance, not to pull yourself up.", s:"Quads and glutes" },
+  { n:"TRX Suspended Lunge", e:"TRX", m:["legs","glutes"], t:"reps", r:"6-8 per side",
+    c:"One foot in the cradle behind you. Lower the back knee towards the floor and drive back up through the front heel.", s:"Front leg and balance" },
+  { n:"TRX Hamstring Curl", e:"TRX", m:["legs","glutes","core"], t:"reps", r:"10-12",
+    c:"On your back, heels in the cradles. Lift the hips, then pull the heels towards your seat and extend slowly.", s:"Hamstrings and glutes" },
+  { n:"TRX Plank", e:"TRX", m:["core"], t:"time",
+    c:"Feet in the cradles, forearms on the floor, body in one line. Squeeze the glutes and keep the hips still.", s:"Deep core" },
+  { n:"TRX Pike", e:"TRX", m:["core"], t:"time",
+    c:"From a TRX plank on straight arms, lift the hips towards the ceiling with straight legs, then lower under control.", s:"Front of the trunk" },
+  { n:"TRX Y-Fly", e:"TRX", m:["shoulders","back"], t:"reps", r:"10-12",
+    c:"Lean back, arms straight. Pull them out and up into a Y without shrugging, then lower slowly.", s:"Rear shoulders and upper back" },
+  { n:"TRX Biceps Curl", e:"TRX", m:["arms"], t:"reps", r:"10-12",
+    c:"Lean back with palms up. Curl the handles towards your forehead keeping the elbows high, then extend slowly.", s:"Biceps" },
+  { n:"TRX Triceps Press", e:"TRX", m:["arms"], t:"reps", r:"8-12",
+    c:"Facing away, elbows high and forward. Lower the hands behind the head, then press back to straight arms.", s:"Back of the upper arms" },
+  { n:"TRX Hip Press", e:"TRX", m:["glutes","core"], t:"reps", r:"12-15",
+    c:"On your back, heels in the cradles, knees bent. Press the hips up until the body is in one line and squeeze.", s:"Glutes" },
+  { n:"TRX Mountain Climber", e:"TRX", m:["core","full"], t:"time",
+    c:"Feet in the cradles, hands on the floor. Drive the knees to the chest one at a time, keeping the hips low.", s:"Core and lungs" }
+];
+
+const WARMUP_POOL = [
+  { n:"Shoulder Circles", c:"Roll the shoulders backwards, slow and full." },
+  { n:"Leg Swings", c:"Swing one leg forward and back, then the other." },
+  { n:"Cat-Cow", c:"On all fours, alternate rounding and arching the spine." },
+  { n:"Hip Circles", c:"Hands on hips, draw slow circles in both directions." },
+  { n:"Inchworm", c:"Walk the hands out to a plank and back to the feet." },
+  { n:"Marching on the Spot", c:"Lift the knees, swing the arms, breathe." }
+];
+const COOLDOWN_POOL = [
+  { n:"Hamstring Stretch", c:"One leg long, hinge forward until you feel a gentle pull." },
+  { n:"Child's Pose", c:"Sit back on the heels, arms long, breathe into the back." },
+  { n:"Chest Opener", c:"Forearm on a wall, turn the chest away slowly." },
+  { n:"Quad Stretch", c:"Heel to the seat, knees together, stand tall." },
+  { n:"Figure-4 Stretch", c:"Ankle over the opposite knee, draw the legs in." }
+];
+
+/* ------------------------------------------------------------- helpers */
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) =>
+  ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
+const clock = (s) => Math.floor(s / 60) + ":" + String(Math.max(0, s % 60)).padStart(2, "0");
+const pick = (arr, n) => { const a = arr.slice(); const out = [];
+  while (a.length && out.length < n) out.push(a.splice(Math.floor(Math.random() * a.length), 1)[0]);
+  return out; };
+
+/* --------------------------------------------------- deterministic time
+   The whole point: rounds, sets, work and rest are computed from the
+   chosen duration, never asked of the model. Intervals land on the
+   target to the second; rep-based sets are an estimate by nature and
+   are labelled as such. */
+
+function computeTiming(minutes, format) {
+  const total = minutes * 60;
+  const edge = minutes <= 15 ? 30 : 45;      // warm-up / cool-down item length
+  const warmSec = 2 * edge;
+  let main = total - warmSec - 2 * edge;
+
+  if (format === "intervals") {
+    const nEx = minutes <= 15 ? 5 : minutes <= 30 ? 6 : minutes <= 45 ? 7 : 8;
+    const rest = 15;
+    let best = null;
+    for (const work of [25, 30, 35, 40, 45, 50]) {
+      for (let rounds = 2; rounds <= 8; rounds++) {
+        const sec = nEx * rounds * (work + rest) - rest;   // no rest after the very last interval
+        const score = Math.abs(main - sec) + Math.abs(work - 40) * 0.6;
+        if (!best || score < best.score) best = { work, rounds, rest, sec, score };
+      }
+    }
+    // the leftover seconds go into the cool-down, so the total is exact
+    const coolTotal = Math.max(40, Math.min(300, 2 * edge + (main - best.sec)));
+    const coolA = Math.round(coolTotal / 2);
+    return {
+      format, nEx, rounds: best.rounds, work: best.work, rest: best.rest, sets: 1,
+      warm: [edge, edge], cool: [coolA, coolTotal - coolA],
+      plannedSec: total, scheduledSec: warmSec + best.sec + coolTotal, exact: true
+    };
+  }
+
+  // Sets: solve for the rest that makes the estimate land on the target.
+  const workEst = 40;                                  // assumed time for one working set
+  const prefEx = minutes <= 15 ? 4 : minutes <= 30 ? 5 : minutes <= 45 ? 6 : 7;
+  let best = null;
+  for (const nEx of [4, 5, 6, 7, 8]) {
+    for (const sets of [2, 3, 4]) {
+      const units = nEx * sets;
+      const rest = Math.round((main - units * workEst) / (units - 1));
+      if (rest < 25 || rest > 90) continue;
+      const sec = units * workEst + (units - 1) * rest;
+      const score = Math.abs(main - sec) + Math.abs(nEx - prefEx) * 12 +
+                    Math.abs(rest - 50) * 1.2 + (sets === 2 ? 15 : 0);
+      if (!best || score < best.score) best = { nEx, sets, rest, sec, score };
+    }
+  }
+  if (!best) {
+    const nEx = prefEx, sets = 3, units = nEx * sets;
+    const rest = Math.max(25, Math.min(90, Math.round((main - units * workEst) / (units - 1))));
+    best = { nEx, sets, rest, sec: units * workEst + (units - 1) * rest };
+  }
+  return {
+    format, nEx: best.nEx, sets: best.sets, rounds: 1, work: workEst, rest: best.rest,
+    warm: [edge, edge], cool: [edge, edge],
+    plannedSec: total, scheduledSec: warmSec + best.sec + 2 * edge, exact: false
+  };
+}
+
+/* ------------------------------------------------------- local builder */
+
+function localPlan(cfg, timing) {
+  const wants = cfg.muscles.map((m) => MUSCLE_KEY[m]);
+  const anyMuscle = wants.includes("full");
+  const pool = LIB.filter((x) => cfg.equipment.indexOf(x.e) !== -1 &&
+    (anyMuscle || x.m.some((k) => wants.indexOf(k) !== -1)));
+  const base = pool.length >= timing.nEx
+    ? pool
+    : LIB.filter((x) => cfg.equipment.indexOf(x.e) !== -1);
+  const chosen = pick(base, timing.nEx);
+  return {
+    title: cfg.muscles.join(" & ") + " · " + cfg.time + " min",
+    summary: "A " + cfg.level.toLowerCase() + " session built from the built-in exercise library.",
+    safetyNote: "",
+    warmup: pick(WARMUP_POOL, 2).map((w, i) => ({ name: w.n, cue: w.c, duration: timing.warm[i] })),
+    cooldown: pick(COOLDOWN_POOL, 2).map((w, i) => ({ name: w.n, cue: w.c, duration: timing.cool[i] })),
+    exercises: chosen.map((x) => ({
+      name: x.n, equipment: x.e, cue: x.c, sensation: x.s,
+      type: timing.format === "intervals" ? "time" : x.t,
+      reps: timing.format === "intervals" ? "" : (x.t === "reps" ? x.r : "")
+    })),
+    source: "local"
+  };
+}
+
+/* ------------------------------------------------------------- the ask */
+
+function buildPrompt(cfg, timing, corrective) {
+  const eq = cfg.equipment.join(", ");
+  const mode = timing.format === "intervals"
+    ? 'This is a circuit. Every exercise must be safe to perform continuously for ' + timing.work +
+      ' seconds. Set "type" to "time" and leave "reps" empty.'
+    : 'This is straight sets. Use "type":"reps" with a rep range in "reps" (for example "8-12" or ' +
+      '"8-10 per side"), or "type":"time" for holds such as planks, leaving "reps" empty.';
+  return [
+    "You are an experienced, safety-conscious personal trainer. Design ONE workout.",
+    "",
+    "Athlete level: " + cfg.level,
+    "Focus: " + cfg.muscles.join(", "),
+    "Available equipment: " + eq,
+    "Notes from the athlete: " + (cfg.notes.trim() || "none"),
+    "",
+    "The app has already fixed all timing (sets, rounds, seconds of work and rest). Do NOT choose or " +
+    "mention durations, sets, rounds or rest. Choose only the exercises and how to perform them.",
+    "",
+    "Return exactly 2 warm-up items, " + timing.nEx + " different main exercises, and 2 cool-down items.",
+    mode,
+    "Warm-up and cool-down must need no equipment (mobility and stretching).",
+    'Equipment rule: every main exercise uses only ' + eq + '. Never use barbells, dumbbells, machines, ' +
+    'resistance bands or benches. The "equipment" field must be exactly one of: ' + eq + ".",
+    "Safety: if the notes mention anything relevant, avoid contraindicated exercises, pick safe " +
+    'alternatives and explain that in "safety_note". Otherwise "safety_note" is an empty string.',
+    '"cue": 1-2 clear sentences so someone can perform the exercise correctly without prior knowledge. ' +
+    'Do not name muscle groups there. "sensation": max 6 words naming where it should be felt.',
+    "Encourage healthy, sustainable training. No extreme or exhausting prescriptions.",
+    corrective ? "\nPrevious attempt was rejected: " + corrective + " Fix exactly this." : "",
+    "",
+    "Reply with only this JSON:",
+    '{"title":"short title","summary":"one sentence on what this workout does","safety_note":"",' +
+    '"warmup":[{"name":"","cue":""}],' +
+    '"exercises":[{"name":"","equipment":"","type":"reps","reps":"","cue":"","sensation":""}],' +
+    '"cooldown":[{"name":"","cue":""}]}'
+  ].join("\n");
+}
+
+/* --------------------------------------------------------- validation
+   The model's answer is never trusted as-is: shape, equipment and count
+   are checked, anything missing is topped up from the library, and a
+   badly broken answer triggers one corrective retry before the fallback. */
+
+function validate(raw, cfg, timing) {
+  const problems = [];
+  if (!raw || typeof raw !== "object" || !Array.isArray(raw.exercises)) {
+    return { problems: ["the reply had no exercises array"], plan: null };
+  }
+  const allowed = cfg.equipment.map((e) => e.toLowerCase());
+  const seen = Object.create(null);
+  const ok = [];
+  raw.exercises.forEach((x) => {
+    if (!x || typeof x.name !== "string" || !x.name.trim() || typeof x.cue !== "string" || !x.cue.trim()) return;
+    const key = x.name.trim().toLowerCase();
+    if (seen[key]) { problems.push("duplicate exercise"); return; }
+    let eq = String(x.equipment || "").trim();
+    const hit = cfg.equipment.find((e) => e.toLowerCase() === eq.toLowerCase());
+    if (!hit) { problems.push('"' + x.name + '" used equipment outside the selection'); return; }
+    seen[key] = true;
+    const type = timing.format === "intervals" ? "time" : (x.type === "time" ? "time" : "reps");
+    ok.push({
+      name: x.name.trim(), equipment: hit, cue: x.cue.trim(),
+      sensation: typeof x.sensation === "string" ? x.sensation.trim() : "",
+      type, reps: type === "reps" ? String(x.reps || "10-12").trim() : ""
+    });
+  });
+  if (ok.length < Math.ceil(timing.nEx * 0.6)) {
+    problems.push("only " + ok.length + " of " + timing.nEx + " exercises were usable");
+    return { problems, plan: null };
+  }
+  if (ok.length > timing.nEx) ok.length = timing.nEx;
+  if (ok.length < timing.nEx) {                       // top up from the library
+    problems.push("topped up " + (timing.nEx - ok.length) + " exercise(s) from the library");
+    const filler = LIB.filter((x) => cfg.equipment.indexOf(x.e) !== -1 && !seen[x.n.toLowerCase()]);
+    pick(filler, timing.nEx - ok.length).forEach((x) => ok.push({
+      name: x.n, equipment: x.e, cue: x.c, sensation: x.s,
+      type: timing.format === "intervals" ? "time" : x.t,
+      reps: timing.format === "intervals" ? "" : (x.t === "reps" ? x.r : "")
+    }));
+  }
+  const listOf = (arr, poolItems, durations) => {
+    const src = Array.isArray(arr) ? arr.filter((x) => x && x.name) : [];
+    const out = [];
+    for (let i = 0; i < 2; i++) {
+      const s = src[i];
+      out.push(s
+        ? { name: String(s.name).trim(), cue: String(s.cue || "").trim(), duration: durations[i] }
+        : { name: poolItems[i].n, cue: poolItems[i].c, duration: durations[i] });
+    }
+    return out;
+  };
+  const wSpare = pick(WARMUP_POOL, 2), cSpare = pick(COOLDOWN_POOL, 2);
+  return {
+    problems,
+    plan: {
+      title: (typeof raw.title === "string" && raw.title.trim()) || "Your workout",
+      summary: (typeof raw.summary === "string" && raw.summary.trim()) || "",
+      safetyNote: typeof raw.safety_note === "string" ? raw.safety_note.trim() : "",
+      warmup: listOf(raw.warmup, wSpare, timing.warm),
+      cooldown: listOf(raw.cooldown, cSpare, timing.cool),
+      exercises: ok,
+      source: "claude"
+    }
+  };
+}
+
+/* ------------------------------------------------------------- steps */
+
+function buildSteps(plan, timing) {
+  const steps = [];
+  plan.warmup.forEach((x) =>
+    steps.push({ phase:"warmup", timed:true, name:x.name, cue:x.cue, duration:x.duration }));
+
+  const work = [];
+  if (timing.format === "intervals") {
+    for (let r = 1; r <= timing.rounds; r++) {
+      plan.exercises.forEach((e) => work.push({
+        phase:"work", timed:true, name:e.name, cue:e.cue, sensation:e.sensation,
+        equipment:e.equipment, duration:timing.work,
+        meta: timing.rounds > 1 ? "Round " + r + "/" + timing.rounds : ""
+      }));
+    }
+  } else {
+    plan.exercises.forEach((e) => {
+      for (let s = 1; s <= timing.sets; s++) {
+        work.push({
+          phase:"work", timed: e.type === "time", name:e.name, cue:e.cue, sensation:e.sensation,
+          equipment:e.equipment, duration: timing.work, reps: e.reps,
+          meta: "Set " + s + "/" + timing.sets
+        });
+      }
+    });
+  }
+  work.forEach((w, i) => {
+    steps.push(w);
+    if (i < work.length - 1) steps.push({ phase:"rest", timed:true, name:"Rest", duration:timing.rest });
+  });
+
+  plan.cooldown.forEach((x) =>
+    steps.push({ phase:"cooldown", timed:true, name:x.name, cue:x.cue, duration:x.duration }));
+  return steps;
+}
+
+/* --------------------------------------------------------------- state */
+
+const S = {
+  screen: "start",
+  step: 0,
+  equipment: [], level: "", muscles: [], time: 0, format: "sets", notes: "",
+  timing: null, plan: null, steps: [], idx: 0,
+  banner: "", sample: null, sampleChecked: false, abort: null
+};
+
+const SAMPLE_P = claudeSample().then((fn) => {
+  S.sample = fn; S.sampleChecked = true;
+  if (S.screen === "start") render();
+  return fn;
+});
+async function claudeSample() {
+  try {
+    if (!window.claude || typeof window.claude.use !== "function") return null;
+    return await window.claude.use("sample");
+  } catch (e) { return null; }
+}
+
+/* -------------------------------------------------------------- screens */
+
+function render() {
+  const app = $("app");
+  app.className = (S.screen === "overview" || S.screen === "done") ? "wrap wide" : "wrap";
+  const html = {
+    start: viewStart, quiz: viewQuiz, loading: viewLoading,
+    overview: viewOverview, guided: viewGuided, done: viewDone
+  }[S.screen]();
+  app.innerHTML = html;
+  const wire = {
+    start: wireStart, quiz: wireQuiz, loading: wireLoading,
+    overview: wireOverview, guided: wireGuided, done: wireDone
+  }[S.screen];
+  if (wire) wire();
+}
+
+/* ---- start ---- */
+function viewStart() {
+  return '<div class="center" style="padding-top:40px">' +
+    '<div class="logo"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="var(--work)" ' +
+    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6M7 8v8M17 8v8M20 9v6M7 12h10"/></svg></div>' +
+    '<h1 class="big">Workout Generator</h1>' +
+    '<p class="sub" style="max-width:340px;margin:0 auto">Your own session in 30 seconds. ' +
+    'Pick your setup, the plan is built around the time you have.</p>' +
+    '<button class="btn" id="go" style="max-width:260px">Let\'s go</button></div>';
+}
+function wireStart() { $("go").onclick = () => { S.screen = "quiz"; S.step = 0; render(); }; }
+
+/* ---- quiz ---- */
+const STEPS = [
+  { key:"equipment", label:"Equipment",  sub:"What do you train with? (multiple choice)", accent:"work" },
+  { key:"level",     label:"Level",      sub:"How fit are you right now?",                accent:"work" },
+  { key:"muscles",   label:"Focus",      sub:"What do you want to train? (multiple choice)", accent:"rest" },
+  { key:"time",      label:"Time",       sub:"How much time do you have?",                accent:"work" },
+  { key:"format",    label:"Format",     sub:"How should it be structured?",              accent:"work" },
+  { key:"notes",     label:"Notes",      sub:"Anything I should know?",                   accent:"info" }
+];
+
+function chipRow(items, isActive, accent, attr) {
+  return '<div class="chips">' + items.map((it) => {
+    const v = typeof it === "string" ? it : it.id;
+    const l = typeof it === "string" ? it : it.label;
+    return '<button class="chip ' + accent + '" data-' + attr + '="' + esc(v) + '" aria-pressed="' +
+      (isActive(v) ? "true" : "false") + '">' + esc(l) + "</button>";
+  }).join("") + "</div>";
+}
+
+function viewQuiz() {
+  const cur = STEPS[S.step], last = S.step === STEPS.length - 1;
+  const accentVar = cur.accent === "rest" ? "var(--rest)" : cur.accent === "info" ? "var(--info)" : "var(--work)";
+  let body = "";
+  if (cur.key === "equipment")
+    body = chipRow(EQUIPMENT, (v) => S.equipment.indexOf(v) !== -1, "work", "equip");
+  else if (cur.key === "level")
+    body = chipRow(LEVELS, (v) => S.level === v, "work", "level");
+  else if (cur.key === "muscles")
+    body = chipRow(MUSCLE_LABELS, (v) => S.muscles.indexOf(v) !== -1, "rest", "muscle");
+  else if (cur.key === "time")
+    body = chipRow(TIMES.map((t) => ({ id:String(t), label:t + " min" })), (v) => S.time === +v, "work", "time");
+  else if (cur.key === "format")
+    body = chipRow(FORMATS, (v) => S.format === v, "work", "format") +
+      '<div class="hint">' + (S.format === "sets"
+        ? "All sets of one exercise back to back, with a rest between them. Classic strength work."
+        : "Different exercises in a circuit, short work and rest intervals, several rounds.") + "</div>";
+  else
+    body = '<textarea id="notes" rows="4" placeholder="Anything I should know?">' + esc(S.notes) + "</textarea>" +
+      '<div class="hint">Optional. Used to adapt the exercises' +
+      (S.sample ? ". Your answers are sent to Claude to build the workout." : ".") + "</div>";
+
+  const ready = S.equipment.length && S.level && S.muscles.length && S.time && S.format;
+  const canNext = cur.key === "equipment" ? S.equipment.length > 0
+    : cur.key === "level" ? !!S.level
+    : cur.key === "muscles" ? S.muscles.length > 0
+    : cur.key === "time" ? !!S.time : true;
+
+  return '<div class="row"><span class="eyebrow">Step ' + (S.step + 1) + " / " + STEPS.length + "</span>" +
+    (S.step > 0 ? '<button class="link" id="back">&lsaquo; Back</button>'
+                : '<span class="eyebrow work">Workout Generator</span>') + "</div>" +
+    '<div class="bar"><i style="width:' + ((S.step + 1) / STEPS.length * 100) + "%;background:" + accentVar + '"></i></div>' +
+    '<h1 style="color:' + accentVar + '">' + cur.label + "</h1>" +
+    '<p class="sub">' + esc(cur.sub) + "</p>" + body +
+    (last
+      ? '<button class="btn" id="generate"' + (ready ? "" : " disabled") + ">" +
+        (ready ? "Generate workout" : "Complete the earlier steps") + "</button>"
+      : '<button class="btn" id="next"' + (canNext ? "" : " disabled") +
+        ' style="background:' + (canNext ? accentVar : "var(--surface2)") + '">Next</button>');
+}
+
+function wireQuiz() {
+  const back = $("back"); if (back) back.onclick = () => { S.step--; render(); };
+  const next = $("next"); if (next) next.onclick = () => { S.step++; render(); };
+  const gen = $("generate"); if (gen) gen.onclick = () => start();
+  const notes = $("notes"); if (notes) notes.oninput = (e) => { S.notes = e.target.value; };
+  document.querySelectorAll("[data-equip]").forEach((b) => b.onclick = () => {
+    const v = b.dataset.equip, i = S.equipment.indexOf(v);
+    if (i === -1) S.equipment.push(v); else S.equipment.splice(i, 1);
+    render();
+  });
+  document.querySelectorAll("[data-level]").forEach((b) => b.onclick = () => { S.level = b.dataset.level; render(); });
+  document.querySelectorAll("[data-muscle]").forEach((b) => b.onclick = () => {
+    const v = b.dataset.muscle;
+    if (v === "Full body") S.muscles = S.muscles.indexOf(v) !== -1 ? [] : ["Full body"];
+    else {
+      S.muscles = S.muscles.filter((x) => x !== "Full body");
+      const i = S.muscles.indexOf(v);
+      if (i === -1) S.muscles.push(v); else S.muscles.splice(i, 1);
+    }
+    render();
+  });
+  document.querySelectorAll("[data-time]").forEach((b) => b.onclick = () => { S.time = +b.dataset.time; render(); });
+  document.querySelectorAll("[data-format]").forEach((b) => b.onclick = () => { S.format = b.dataset.format; render(); });
+}
+
+/* ---- loading ---- */
+function viewLoading() {
+  return '<div class="center" style="margin-top:60px"><div class="spinner"></div>' +
+    '<div style="font-weight:700;font-size:17px">Building your workout…</div>' +
+    '<p class="sub" style="margin-top:6px">Choosing exercises, checking the plan.</p>' +
+    '<button class="link" id="cancel" style="margin-top:18px">Cancel</button></div>';
+}
+function wireLoading() {
+  $("cancel").onclick = () => { if (S.abort) S.abort.abort(); S.screen = "quiz"; S.step = STEPS.length - 1; render(); };
+}
+
+/* ---- overview ---- */
+function equipIcon(type, size) {
+  const t = String(type || "").toLowerCase();
+  const o = 'width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="var(--work)" ' +
+    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+  if (t.indexOf("kettle") !== -1) return "<svg " + o + '><path d="M8 10a4 4 0 0 1 8 0"/><circle cx="12" cy="15" r="5"/></svg>';
+  if (t.indexOf("trx") !== -1) return "<svg " + o + '><path d="M12 3v3"/><path d="M12 6l-5 7"/><path d="M12 6l5 7"/>' +
+    '<circle cx="7" cy="15.5" r="1.6"/><circle cx="17" cy="15.5" r="1.6"/></svg>';
+  return "<svg " + o + '><circle cx="12" cy="5" r="2.4"/><path d="M12 7.5v6"/><path d="M12 10l-4 2.5"/>' +
+    '<path d="M12 10l4 2.5"/><path d="M12 13.5l-3 6"/><path d="M12 13.5l3 6"/></svg>';
+}
+function itemRow(x, meta) {
+  return '<div class="item"><div class="row" style="align-items:flex-start">' +
+    '<div style="flex:1;min-width:0"><div class="name">' + esc(x.name) + "</div>" +
+    (meta ? '<div class="meta">' + esc(meta) + "</div>" : "") + "</div>" +
+    (x.equipment ? '<div class="equip">' + equipIcon(x.equipment, 22) +
+      '<div class="lbl">' + esc(x.equipment) + "</div></div>" : "") + "</div>" +
+    (x.cue ? '<div class="cue">' + esc(x.cue) + "</div>" : "") +
+    (x.sensation ? '<div class="sens">Felt in: ' + esc(x.sensation) + "</div>" : "") + "</div>";
+}
+function viewOverview() {
+  const p = S.plan, t = S.timing;
+  const badge = t.format === "intervals"
+    ? "Intervals · " + t.rounds + " rounds · " + t.work + "s work / " + t.rest + "s rest"
+    : "Sets · " + t.sets + " sets per exercise · " + t.rest + "s rest";
+  const timeLine = t.exact
+    ? "Planned " + (t.plannedSec / 60) + " min · scheduled " + clock(t.scheduledSec)
+    : "Planned " + (t.plannedSec / 60) + " min · estimated " + clock(t.scheduledSec) +
+      " (rep sets are self-paced, rests are timed)";
+  return '<div class="eyebrow work">Your workout</div>' +
+    "<h1>" + esc(p.title) + "</h1>" +
+    (p.summary ? '<p class="sub">' + esc(p.summary) + "</p>" : "") +
+    '<div class="pill">' + esc(badge) + "</div>" +
+    '<div class="hint">' + esc(timeLine) + "</div>" +
+    (S.banner ? '<div class="note plain">' + esc(S.banner) + "</div>" : "") +
+    (p.safetyNote ? '<div class="note"><b>Safety note · </b>' + esc(p.safetyNote) + "</div>" : "") +
+    '<div class="section"><div class="eyebrow rest">Warm-up</div>' +
+      p.warmup.map((x) => itemRow(x, x.duration + "s")).join("") + "</div>" +
+    '<div class="section"><div class="eyebrow work">Main set</div>' +
+      p.exercises.map((x) => itemRow(x, t.format === "intervals"
+        ? t.work + "s × " + t.rounds + " rounds"
+        : (x.type === "reps" ? t.sets + " × " + x.reps : t.sets + " × " + t.work + "s"))).join("") + "</div>" +
+    '<div class="section"><div class="eyebrow rest">Cool-down</div>' +
+      p.cooldown.map((x) => itemRow(x, x.duration + "s")).join("") + "</div>" +
+    '<button class="btn" id="startGuided">Start guided session</button>' +
+    '<button class="btn ghost" id="again">New workout</button>' +
+    (p.source === "local" && S.sample ? '<button class="btn ghost" id="retryAi">Try Claude again</button>' : "") +
+    (p.source === "local" && !S.sample ? '<button class="btn ghost" id="copyPrompt">Copy prompt for Claude</button>' : "") +
+    '<div class="disclaimer">Not medical advice. Listen to your body and stop if anything hurts. ' +
+    'If you have a health condition, check with a doctor or physiotherapist first.</div>';
+}
+function wireOverview() {
+  $("startGuided").onclick = () => { S.steps = buildSteps(S.plan, S.timing); S.idx = 0; S.screen = "guided"; enterStep(); };
+  $("again").onclick = () => { S.screen = "quiz"; S.step = 0; render(); };
+  const retry = $("retryAi"); if (retry) retry.onclick = () => start();
+  const copy = $("copyPrompt"); if (copy) copy.onclick = () => {
+    const text = buildPrompt(cfgOf(), S.timing, "");
+    const done = () => { copy.textContent = "Prompt copied"; setTimeout(() => { copy.textContent = "Copy prompt for Claude"; }, 2000); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, done);
+    else {
+      const ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  };
+}
+
+/* ---- guided ---- */
+let timer = null, endAt = 0, leftSec = 0, running = false;
+
+function viewGuided() {
+  const s = S.steps[S.idx];
+  const accent = s.phase === "work" ? "var(--work)" : "var(--rest)";
+  const soft = s.phase === "work" ? "var(--work-soft)" : "var(--rest-soft)";
+  const label = { warmup:"Warm-up", work:"Exercise", rest:"Rest", cooldown:"Cool-down" }[s.phase];
+  const main = s.timed
+    ? '<div class="clock" id="clock" style="color:' + accent + '">' + clock(leftSec) + "</div>"
+    : '<div class="reps" style="color:' + accent + '">' + esc(s.reps || "—") +
+      (/[a-z]/i.test(s.reps || "") ? "" : "<span> reps</span>") + "</div>";
+  return '<div class="row"><span class="eyebrow">Step ' + (S.idx + 1) + " / " + S.steps.length + "</span>" +
+    '<button class="link" id="exit">Finish ✕</button></div>' +
+    '<div class="bar"><i style="width:' + ((S.idx + 1) / S.steps.length * 100) + "%;background:" + accent + '"></i></div>' +
+    '<div class="stage" style="background:' + soft + ";border:1px solid " + accent + '">' +
+      '<div class="eyebrow" style="color:' + accent + '">' + label + (s.meta ? " · " + esc(s.meta) : "") + "</div>" +
+      (s.equipment ? '<div style="margin-top:10px">' + equipIcon(s.equipment, 20) + "</div>" : "") +
+      '<div class="title">' + esc(s.name) + "</div>" + main +
+      (s.cue ? '<div class="cue-big">' + esc(s.cue) + "</div>" : "") +
+      (s.sensation ? '<div class="cue-big" style="color:' + accent + ';font-size:13px">Should be felt in: ' +
+        esc(s.sensation) + "</div>" : "") +
+    "</div>" +
+    '<div class="controls"><button id="prev"' + (S.idx === 0 ? " disabled" : "") + ">&lsaquo;</button>" +
+    '<button class="main" id="mainBtn" style="background:' + accent + '">' +
+      (s.timed ? (running ? "Pause" : (leftSec === s.duration ? "Start" : "Resume")) : "Set done") + "</button>" +
+    '<button id="skip">&rsaquo;</button></div>';
+}
+
+function enterStep() {
+  const s = S.steps[S.idx];
+  stopTimer();
+  leftSec = s.timed ? s.duration : 0;
+  running = s.timed && s.phase === "rest";     // rests start themselves, work waits for you
+  render();
+  if (running) startTimer();
+}
+function startTimer() {
+  running = true; endAt = Date.now() + leftSec * 1000;
+  stopTimer();
+  timer = setInterval(() => {
+    const remain = Math.max(0, Math.round((endAt - Date.now()) / 1000));
+    if (remain !== leftSec) {
+      leftSec = remain;
+      const c = $("clock"); if (c) c.textContent = clock(leftSec);
+    }
+    if (remain <= 0) { stopTimer(); beep(); nextStep(); }
+  }, 200);
+  const b = $("mainBtn"); if (b) b.textContent = "Pause";
+}
+function stopTimer() { if (timer) { clearInterval(timer); timer = null; } }
+function pauseTimer() {
+  running = false; stopTimer();
+  const b = $("mainBtn"); if (b) b.textContent = "Resume";
+}
+function nextStep() {
+  if (S.idx < S.steps.length - 1) { S.idx++; enterStep(); }
+  else { stopTimer(); S.screen = "done"; render(); }
+}
+function wireGuided() {
+  $("exit").onclick = () => { stopTimer(); S.screen = "overview"; render(); };
+  $("prev").onclick = () => { if (S.idx > 0) { S.idx--; enterStep(); } };
+  $("skip").onclick = () => nextStep();
+  $("mainBtn").onclick = () => {
+    const s = S.steps[S.idx];
+    if (!s.timed) return nextStep();
+    if (running) pauseTimer(); else startTimer();
+  };
+}
+function beep() {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.frequency.value = 660; o.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(0.001, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    o.start(); o.stop(ctx.currentTime + 0.36);
+    setTimeout(() => { try { ctx.close(); } catch (e) {} }, 800);
+  } catch (e) {}
+}
+
+/* ---- done ---- */
+function viewDone() {
+  return '<div class="center" style="margin-top:70px"><div style="font-size:54px">✔</div>' +
+    '<h1 style="margin-top:8px">Done.</h1><p class="sub">Nicely held together. Have a glass of water.</p>' +
+    '<button class="btn" id="again2" style="max-width:260px">New workout</button></div>';
+}
+function wireDone() { $("again2").onclick = () => { S.screen = "quiz"; S.step = 0; render(); }; }
+
+/* ------------------------------------------------------------ the flow */
+
+function cfgOf() {
+  return { equipment: S.equipment.slice(), level: S.level, muscles: S.muscles.slice(),
+           time: S.time, format: S.format, notes: S.notes };
+}
+
+async function start() {
+  const cfg = cfgOf();
+  const timing = computeTiming(cfg.time, cfg.format);
+  S.timing = timing;
+  S.banner = "";
+
+  S.screen = "loading"; render();
+  await SAMPLE_P;                                    // resolves null outside a Claude viewer
+  if (!S.sample) {                                   // no Claude here: library build
+    S.plan = localPlan(cfg, timing);
+    S.banner = "Built offline from the built-in exercise library.";
+    S.screen = "overview"; render(); return;
+  }
+
+  S.abort = new AbortController();
+  const signal = S.abort.signal;
+  let corrective = "", lastIssue = "";
+
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const raw = await S.sample.json(buildPrompt(cfg, timing, corrective), {
+        modelTier: "default", cache: false, signal
+      });
+      const { problems, plan } = validate(raw, cfg, timing);
+      if (plan) {
+        S.plan = plan;
+        S.banner = problems.length ? "Adjusted after checking: " + problems.join("; ") + "." : "";
+        S.screen = "overview"; render(); return;
+      }
+      corrective = problems.join("; ") + ".";
+      lastIssue = corrective;
+    } catch (e) {
+      if (e && e.code === "cancelled") return;        // the user pressed Cancel
+      lastIssue = (e && e.code) ? e.code : "connection problem";
+      if (e && (e.code === "not_granted" || e.code === "sampling_disabled" ||
+                e.code === "not_declared" || e.code === "rate_limited" ||
+                e.code === "session_expired")) break; // no point trying again
+      corrective = (e && e.code === "invalid_json")
+        ? "the previous reply was not valid JSON. Reply with the JSON object only, nothing before or after."
+        : "";
+    }
+  }
+
+  S.plan = localPlan(cfg, timing);                    // always ends with a workout
+  S.banner = "Claude was not available (" + lastIssue + "), so this was built from the built-in library.";
+  S.screen = "overview"; render();
+}
+
+render();
+</script>
+</body>
+</html>
